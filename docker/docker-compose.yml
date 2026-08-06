@@ -3,13 +3,22 @@ version: '3.8'
 services:
   vinyl-groove-api:
     build: .
+    container_name: vinyl-groove-api
     ports:
       - "8000:8000"
     environment:
       - DEBUG=True
       - SECRET_KEY=your-secret-key-change-this-in-production
       - DATABASE_URL=sqlite:///./vinyl_groove.db
+      - PYTHONUNBUFFERED=1
     volumes:
       - ../:/app
+      - /app/__pycache__
     command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

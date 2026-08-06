@@ -12,7 +12,7 @@ from typing import Optional
 from config import settings
 from database import get_db, create_tables, User as UserModel, Product as ProductModel, Notification as NotificationModel
 from schemas import BaseResponse, ErrorDetail
-from auth import create_access_token
+from auth import create_access_token, get_current_user
 from utils import (
     validate_email, validate_password_login, validate_password_signup,
     validate_name, validate_phone, validate_barcode,
@@ -469,8 +469,8 @@ async def list_products(
     barcode: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     size: int = Query(12, ge=1),
-    userId: Optional[int] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """상품 목록 조회"""
     query = db.query(ProductModel)
@@ -509,7 +509,11 @@ async def list_products(
     return BaseResponse(success=True, data=[{"id": p.id, "albumName": p.albumName, "artist": p.artist, "genre": p.genre, "condition": p.condition, "price": p.price, "tradeMethod": p.tradeMethod, "albumImage": p.albumImage, "likeCount": p.likeCount, "createdAt": p.createdAt.isoformat() + "Z"} for p in products], pagination=pagination)
 
 @app.get("/products/{product_id}", response_model=BaseResponse, tags=["products"])
-async def get_product(product_id: int, userId: Optional[int] = Query(None), db: Session = Depends(get_db)):
+async def get_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """상품 상세 조회"""
     product = db.query(ProductModel).filter(ProductModel.id == product_id).first()
 
@@ -527,11 +531,13 @@ async def get_product(product_id: int, userId: Optional[int] = Query(None), db: 
 # ==================== 상품 관리 API ====================
 
 @app.post("/products", response_model=BaseResponse, status_code=status.HTTP_201_CREATED, tags=["products"])
-async def create_product(request: ProductCreateRequest, userId: Optional[int] = Query(None), db: Session = Depends(get_db)):
+async def create_product(
+    request: ProductCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """상품 등록"""
-    if not userId:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_PARAMS", "message": "userId 파라미터가 필요합니다."}]})
-
+    user_id = current_user["user_id"]
     errors = []
     if not request.albumName:
         errors.append(ErrorDetail(code="REQUIRED", field="albumName", message="앨범명을 입력해주세요."))
@@ -551,7 +557,7 @@ async def create_product(request: ProductCreateRequest, userId: Optional[int] = 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [e.dict() for e in errors]})
 
-    new_product = ProductModel(albumName=request.albumName, artist=request.artist, genre=request.genre, condition=request.condition, price=request.price, tradeMethod=request.tradeMethod, barcode=request.barcode, description=request.description, albumImage=request.albumImage, sellerId=userId)
+    new_product = ProductModel(albumName=request.albumName, artist=request.artist, genre=request.genre, condition=request.condition, price=request.price, tradeMethod=request.tradeMethod, barcode=request.barcode, description=request.description, albumImage=request.albumImage, sellerId=user_id)
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
@@ -559,24 +565,27 @@ async def create_product(request: ProductCreateRequest, userId: Optional[int] = 
     return BaseResponse(success=True, message="상품이 등록되었습니다.", data={"id": new_product.id, "albumName": new_product.albumName, "artist": new_product.artist, "genre": new_product.genre, "condition": new_product.condition, "price": new_product.price, "tradeMethod": new_product.tradeMethod, "barcode": new_product.barcode, "description": new_product.description, "albumImage": new_product.albumImage, "createdAt": new_product.createdAt.isoformat() + "Z"})
 
 @app.get("/products/me", response_model=BaseResponse, tags=["products"])
-async def get_my_products(userId: Optional[int] = Query(None), db: Session = Depends(get_db)):
+async def get_my_products(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """내 상품 조회"""
-    if not userId:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_PARAMS", "message": "userId 파라미터가 필요합니다."}]})
-
-    products = db.query(ProductModel).filter(ProductModel.sellerId == userId).all()
+    user_id = current_user["user_id"]
+    products = db.query(ProductModel).filter(ProductModel.sellerId == user_id).all()
     return BaseResponse(success=True, data=[{"id": p.id, "albumName": p.albumName, "artist": p.artist, "genre": p.genre, "condition": p.condition, "price": p.price, "tradeMethod": p.tradeMethod, "albumImage": p.albumImage, "createdAt": p.createdAt.isoformat() + "Z"} for p in products])
 
 @app.delete("/products/{product_id}", response_model=BaseResponse, tags=["products"])
-async def delete_product(product_id: int, userId: Optional[int] = Query(None), db: Session = Depends(get_db)):
+async def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """상품 삭제"""
-    if not userId:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_PARAMS", "message": "userId 파라미터가 필요합니다."}]})
-
+    user_id = current_user["user_id"]
     product = db.query(ProductModel).filter(ProductModel.id == product_id).first()
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"success": False, "message": "상품을 찾을 수 없습니다.", "errors": [{"code": "PRODUCT_NOT_FOUND", "message": "존재하지 않는 상품입니다."}]})
-    if product.sellerId != userId:
+    if product.sellerId != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"success": False, "message": "삭제 권한이 없습니다.", "errors": [{"code": "FORBIDDEN", "message": "본인이 등록한 상품만 삭제할 수 있습니다."}]})
 
     db.delete(product)
@@ -586,10 +595,12 @@ async def delete_product(product_id: int, userId: Optional[int] = Query(None), d
 # ==================== 이미지 업로드 API ====================
 
 @app.post("/upload/image", response_model=BaseResponse, status_code=status.HTTP_201_CREATED, tags=["upload"])
-async def upload_image(request: ImageUploadRequest, userId: Optional[int] = Query(None), db: Session = Depends(get_db)):
+async def upload_image(
+    request: ImageUploadRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """이미지 업로드"""
-    if not userId:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_PARAMS", "message": "userId 파라미터가 필요합니다."}]})
 
     if not request.image.startswith("data:image/"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_FORMAT", "message": "올바른 이미지 형식이 아닙니다."}]})
@@ -607,13 +618,15 @@ async def upload_image(request: ImageUploadRequest, userId: Optional[int] = Quer
 # ==================== 알림 API ====================
 
 @app.get("/notifications", response_model=BaseResponse, tags=["notifications"])
-async def get_notifications(userId: Optional[int] = Query(None), db: Session = Depends(get_db)):
+async def get_notifications(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """알림 조회"""
-    if not userId:
-        return BaseResponse(success=True, data={"unreadCount": 0, "notifications": []})
+    user_id = current_user["user_id"]
 
-    notifications = db.query(NotificationModel).filter(NotificationModel.userId == userId).order_by(NotificationModel.createdAt.desc()).all()
-    unread_count = db.query(NotificationModel).filter(NotificationModel.userId == userId, NotificationModel.isRead == False).count()
+    notifications = db.query(NotificationModel).filter(NotificationModel.userId == user_id).order_by(NotificationModel.createdAt.desc()).all()
+    unread_count = db.query(NotificationModel).filter(NotificationModel.userId == user_id, NotificationModel.isRead == False).count()
 
     notification_list = []
     for notif in notifications:
@@ -624,19 +637,23 @@ async def get_notifications(userId: Optional[int] = Query(None), db: Session = D
     return BaseResponse(success=True, data={"unreadCount": unread_count, "notifications": notification_list})
 
 @app.put("/notifications/read", response_model=BaseResponse, tags=["notifications"])
-async def mark_notification_read(id: Optional[int] = Query(None), all: Optional[bool] = Query(None), userId: Optional[int] = Query(None), db: Session = Depends(get_db)):
+async def mark_notification_read(
+    id: Optional[int] = Query(None),
+    all: Optional[bool] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """알림 읽음 처리"""
-    if not userId:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_PARAMS", "message": "userId 파라미터가 필요합니다."}]})
+    user_id = current_user["user_id"]
     if id is None and all is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_PARAMS", "message": "id 또는 all 파라미터가 필요합니다."}]})
 
     if all:
-        updated = db.query(NotificationModel).filter(NotificationModel.userId == userId, NotificationModel.isRead == False).update({"isRead": True})
+        updated = db.query(NotificationModel).filter(NotificationModel.userId == user_id, NotificationModel.isRead == False).update({"isRead": True})
         db.commit()
         return BaseResponse(success=True, data={"updatedCount": updated}, message="모든 알림이 읽음 처리되었습니다.")
     elif id is not None:
-        notification = db.query(NotificationModel).filter(NotificationModel.id == id, NotificationModel.userId == userId).first()
+        notification = db.query(NotificationModel).filter(NotificationModel.id == id, NotificationModel.userId == user_id).first()
         if notification:
             notification.isRead = True
             db.commit()
@@ -644,12 +661,13 @@ async def mark_notification_read(id: Optional[int] = Query(None), all: Optional[
         return BaseResponse(success=True, data={"id": id, "isRead": False, "updatedCount": 0}, message="알림이 읽음 처리되었습니다.")
 
 @app.delete("/notifications", response_model=BaseResponse, tags=["notifications"])
-async def delete_notifications(userId: Optional[int] = Query(None), db: Session = Depends(get_db)):
+async def delete_notifications(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """알림 전체 삭제"""
-    if not userId:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_PARAMS", "message": "userId 파라미터가 필요합니다."}]})
-
-    deleted = db.query(NotificationModel).filter(NotificationModel.userId == userId).delete()
+    user_id = current_user["user_id"]
+    deleted = db.query(NotificationModel).filter(NotificationModel.userId == user_id).delete()
     db.commit()
     return BaseResponse(success=True, data={"deletedCount": deleted}, message="모든 알림이 삭제되었습니다.")
 

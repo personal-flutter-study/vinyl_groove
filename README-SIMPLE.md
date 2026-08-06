@@ -207,9 +207,12 @@ rm vinyl_groove.db
 
 ## 📖 더 알아보기
 
-Swagger UI에서 모든 API를 테스트할 수 있습니다:
+### Swagger UI
 - URL: `http://localhost:8000/docs`
 - Try it out 버튼으로 직접 실행 가능
+
+### Docker 실행
+Docker를 사용하려면 [DOCKER.md](docker/DOCKER.md) 참고
 
 ---
 

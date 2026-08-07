@@ -41,23 +41,25 @@ python app.py
 
 **Uvicorn으로 실행 (hot reload 활성화)**
 ```bash
-uvicorn app:app --reload
+python -m uvicorn app:app --reload
 ```
 
 **다른 포트로 실행**
 ```bash
-uvicorn app:app --port 8001 --reload
+python -m uvicorn app:app --port 8001 --reload
 ```
 
 **모든 IP에서 접근 가능하게 (0.0.0.0:8000)**
 ```bash
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **포트와 호스트 커스터마이징 (예: 0.0.0.0:3000)**
 ```bash
-uvicorn app:app --host 0.0.0.0 --port 3000 --reload
+python -m uvicorn app:app --host 0.0.0.0 --port 3000 --reload
 ```
+
+> **Windows 참고:** `uvicorn app:app ...` 처럼 `uvicorn`을 바로 실행하면 `'uvicorn' 용어가 인식되지 않습니다` 오류가 날 수 있습니다. pip이 설치한 `uvicorn.exe`가 있는 `Scripts` 폴더가 PATH에 없기 때문입니다. 위처럼 `python -m uvicorn ...` 형태로 실행하면 PATH와 무관하게 항상 동작합니다.
 
 서버가 시작되면 `http://localhost:8000/docs` 에서 Swagger UI를 볼 수 있습니다. (포트 변경 시 해당 포트 번호로 접속)
 
@@ -187,7 +189,13 @@ curl -X POST http://localhost:8000/products \
 ### 포트 8000 이미 사용 중
 ```bash
 # 다른 포트로 실행
-uvicorn app:app --port 8001
+python -m uvicorn app:app --port 8001
+```
+
+### 'uvicorn' 용어가 인식되지 않습니다 (Windows)
+`pip install`은 성공했는데 `uvicorn` 명령을 바로 실행하면 인식이 안 되는 경우, `uvicorn.exe`가 설치된 `Scripts` 폴더가 PATH에 없는 것입니다. 아래처럼 모듈로 실행하세요.
+```bash
+python -m uvicorn app:app --port 8001 --reload
 ```
 
 ### 모듈을 찾을 수 없음

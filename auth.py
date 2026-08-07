@@ -4,11 +4,11 @@ JWT 인증
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from fastapi import HTTPException, status, Depends
-from fastapi.security import HTTPBearer, HTTPAuthenticationCredentials
+from fastapi import HTTPException, status, Depends, Query
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from config import settings
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
@@ -30,17 +30,28 @@ def verify_token(token: str) -> dict:
             detail={"success": False, "message": "인증 실패", "errors": [{"code": "INVALID_TOKEN", "message": "유효하지 않은 토큰입니다."}]}
         )
 
-async def get_current_user(credentials: HTTPAuthenticationCredentials = Depends(security)) -> dict:
-    """현재 사용자 정보 추출 (토큰 검증)"""
-    token = credentials.credentials
-    payload = verify_token(token)
-    user_id = payload.get("sub")
-    email = payload.get("email")
+async def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    userId: Optional[int] = Query(None)
+) -> dict:
+    """현재 사용자 정보 추출 (Bearer 토큰 또는 userId 쿼리로 인증)"""
+    if credentials is not None:
+        payload = verify_token(credentials.credentials)
+        user_id = payload.get("sub")
+        email = payload.get("email")
 
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"success": False, "message": "인증 실패", "errors": [{"code": "INVALID_TOKEN", "message": "유효하지 않은 토큰입니다."}]}
-        )
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"success": False, "message": "인증 실패", "errors": [{"code": "INVALID_TOKEN", "message": "유효하지 않은 토큰입니다."}]}
+            )
 
-    return {"user_id": int(user_id), "email": email}
+        return {"user_id": int(user_id), "email": email}
+
+    if userId is not None:
+        return {"user_id": userId, "email": None}
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail={"success": False, "message": "인증 실패", "errors": [{"code": "INVALID_TOKEN", "message": "인증 정보가 필요합니다."}]}
+    )

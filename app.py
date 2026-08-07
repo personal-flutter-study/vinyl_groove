@@ -2,6 +2,12 @@
 Vinyl Groove API - 통합 서버 (단일 서버 버전)
 모든 기능이 하나의 서버에 통합되어 있습니다.
 """
+import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 from fastapi import FastAPI, HTTPException, status, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -508,6 +514,16 @@ async def list_products(
 
     return BaseResponse(success=True, data=[{"id": p.id, "albumName": p.albumName, "artist": p.artist, "genre": p.genre, "condition": p.condition, "price": p.price, "tradeMethod": p.tradeMethod, "albumImage": p.albumImage, "likeCount": p.likeCount, "createdAt": p.createdAt.isoformat() + "Z"} for p in products], pagination=pagination)
 
+@app.get("/products/me", response_model=BaseResponse, tags=["products"])
+async def get_my_products(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """내 상품 조회"""
+    user_id = current_user["user_id"]
+    products = db.query(ProductModel).filter(ProductModel.sellerId == user_id).all()
+    return BaseResponse(success=True, data=[{"id": p.id, "albumName": p.albumName, "artist": p.artist, "genre": p.genre, "condition": p.condition, "price": p.price, "tradeMethod": p.tradeMethod, "albumImage": p.albumImage, "createdAt": p.createdAt.isoformat() + "Z"} for p in products])
+
 @app.get("/products/{product_id}", response_model=BaseResponse, tags=["products"])
 async def get_product(
     product_id: int,
@@ -563,16 +579,6 @@ async def create_product(
     db.refresh(new_product)
 
     return BaseResponse(success=True, message="상품이 등록되었습니다.", data={"id": new_product.id, "albumName": new_product.albumName, "artist": new_product.artist, "genre": new_product.genre, "condition": new_product.condition, "price": new_product.price, "tradeMethod": new_product.tradeMethod, "barcode": new_product.barcode, "description": new_product.description, "albumImage": new_product.albumImage, "createdAt": new_product.createdAt.isoformat() + "Z"})
-
-@app.get("/products/me", response_model=BaseResponse, tags=["products"])
-async def get_my_products(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    """내 상품 조회"""
-    user_id = current_user["user_id"]
-    products = db.query(ProductModel).filter(ProductModel.sellerId == user_id).all()
-    return BaseResponse(success=True, data=[{"id": p.id, "albumName": p.albumName, "artist": p.artist, "genre": p.genre, "condition": p.condition, "price": p.price, "tradeMethod": p.tradeMethod, "albumImage": p.albumImage, "createdAt": p.createdAt.isoformat() + "Z"} for p in products])
 
 @app.delete("/products/{product_id}", response_model=BaseResponse, tags=["products"])
 async def delete_product(

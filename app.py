@@ -8,8 +8,10 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-from fastapi import FastAPI, HTTPException, status, Depends, Query
+from fastapi import FastAPI, HTTPException, Request, status, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from pydantic import BaseModel
@@ -36,6 +38,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# FastAPI는 raise HTTPException(detail={...}) 을 기본적으로 {"detail": {...}} 로 한 번 더 감싸서 응답한다.
+# API 스펙은 success/message/errors가 최상위에 오는 형태이므로, 감싸지 않고 그대로 내려준다.
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if isinstance(exc.detail, dict):
+        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    return JSONResponse(status_code=exc.status_code, content={"success": False, "message": str(exc.detail), "errors": None})
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = [
+        {"code": "INVALID_FORMAT", "field": ".".join(str(p) for p in e["loc"] if p != "body"), "message": e["msg"]}
+        for e in exc.errors()
+    ]
+    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"success": False, "message": "유효성 검사 실패", "errors": errors})
 
 # 비밀번호 해싱
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

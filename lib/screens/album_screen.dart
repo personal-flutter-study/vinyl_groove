@@ -3,19 +3,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
+import 'package:vinyl_groove_poc_1/app_ctrl.dart';
 import 'package:vinyl_groove_poc_1/main.dart';
 import 'package:vinyl_groove_poc_1/models/album_model.dart';
 
 import '../widgets/like_button.dart';
 
 class AlbumScreen extends StatefulWidget {
-  const AlbumScreen({super.key, required this.albumModel, this.id});
-
-
+  const AlbumScreen({super.key, required this.albumModel});
 
   final AlbumModel albumModel;
-  final int? id;
-
 
   @override
   State<AlbumScreen> createState() => _AlbumScreenState();
@@ -27,17 +24,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      get(
-        Uri.parse('http://${baseUrl}/products/${widget.albumModel.id}'),
-        headers: authHeader,
-      ).then((value) async {
-        final body = jsonDecode(value.body);
-        if (value.statusCode == 200) {
-          detail = body['data'];
-          setState(() {});
-        }
-      });
+      detail = appCtrl.loadAlbumDetail(widget.albumModel.id);
+      setState(() {});
     });
+
     super.initState();
   }
 

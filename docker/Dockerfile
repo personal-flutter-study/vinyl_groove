@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Python 패키지 설치
-COPY requirements-simple.txt .
+COPY docker/requirements-simple.txt .
 RUN pip install --no-cache-dir -r requirements-simple.txt
 
 # 애플리케이션 코드 복사

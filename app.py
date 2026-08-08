@@ -8,14 +8,15 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
+import os
 from fastapi import FastAPI, HTTPException, Request, status, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from datetime import timedelta
 from pydantic import BaseModel
-from passlib.context import CryptContext
+import bcrypt
 from typing import Optional
 from config import settings
 from database import get_db, create_tables, User as UserModel, Product as ProductModel, Notification as NotificationModel
@@ -55,14 +56,30 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     ]
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"success": False, "message": "유효성 검사 실패", "errors": errors})
 
-# 비밀번호 해싱
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# 업로드된 이미지 저장 및 정적 파일 서빙
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "images")
+os.makedirs(os.path.join(UPLOAD_DIR, "album"), exist_ok=True)
+os.makedirs(os.path.join(UPLOAD_DIR, "profile"), exist_ok=True)
+app.mount("/images", StaticFiles(directory=UPLOAD_DIR), name="images")
 
+# DB에는 "/images/album/xxx.jpg" 같은 상대 경로만 저장하고, 응답을 내려줄 때마다
+# 지금 이 요청이 실제로 사용한 호스트:포트를 기준으로 절대 URL을 만든다.
+# 이렇게 하면 서버 포트를 바꿔도(예: 8000 -> 8001) 이미 저장된 데이터의 이미지가 깨지지 않는다.
+def resolve_image_url(request: Request, path: Optional[str]) -> Optional[str]:
+    if not path:
+        return path
+    if path.startswith("http://") or path.startswith("https://"):
+        return path
+    return f"{str(request.base_url).rstrip('/')}/{path.lstrip('/')}"
+
+# 비밀번호 해싱 (bcrypt는 72바이트까지만 지원하므로 초과분은 잘라서 사용)
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    password_bytes = password.encode("utf-8")[:72]
+    return bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode("utf-8")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    password_bytes = plain_password.encode("utf-8")[:72]
+    return bcrypt.checkpw(password_bytes, hashed_password.encode("utf-8"))
 
 # ==================== 스키마 ====================
 
@@ -172,14 +189,14 @@ def init_default_data():
                 password=hash_password("Seller1234!@"),
                 name="레코드 판매자",
                 phone="010-1111-2222",
-                profileImage="https://api.vinylgroove.com/images/profile/seller.jpg"
+                profileImage="/images/profile/seller.jpg"
             ),
             UserModel(
                 email="buyer@example.com",
                 password=hash_password("Buyer1234!@"),
                 name="구매자",
                 phone="010-3333-4444",
-                profileImage="https://api.vinylgroove.com/images/profile/buyer.jpg"
+                profileImage="/images/profile/buyer.jpg"
             )
         ]
         db.add_all(test_users)
@@ -196,7 +213,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992605138",
                 description="Fleetwood Mac의 명작 앨범. 거의 새것 같은 상태입니다.",
-                albumImage="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500",
+                albumImage="/images/album/rumours.jpg",
                 sellerId=1,
                 likeCount=45
             ),
@@ -209,7 +226,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0016861829425",
                 description="재즈의 명반. 약간의 사용감이 있지만 재생에는 문제없습니다.",
-                albumImage="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500&h=500",
+                albumImage="/images/album/kind_of_blue.jpg",
                 sellerId=1,
                 likeCount=32
             ),
@@ -222,7 +239,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0082408029621",
                 description="전설적인 팝앨범. 개봉했지만 완벽한 상태입니다.",
-                albumImage="https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=500&h=500",
+                albumImage="/images/album/thriller.jpg",
                 sellerId=1,
                 likeCount=78
             ),
@@ -235,7 +252,7 @@ def init_default_data():
                 tradeMethod="DIRECT",
                 barcode="0077923614627",
                 description="Prince의 걸작. 약간의 스크래치가 있습니다.",
-                albumImage="https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=500&h=500",
+                albumImage="/images/album/purple_rain.jpg",
                 sellerId=1,
                 likeCount=56
             ),
@@ -248,7 +265,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0077776184025",
                 description="비틀즈의 마지막 앨범. 매우 좋은 상태입니다.",
-                albumImage="https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=500&h=500",
+                albumImage="/images/album/abbey_road.jpg",
                 sellerId=1,
                 likeCount=102
             ),
@@ -261,7 +278,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0054429161320",
                 description="프로그레시브 록의 명작. 거의 새것입니다.",
-                albumImage="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500",
+                albumImage="/images/album/rumours.jpg",
                 sellerId=1,
                 likeCount=88
             ),
@@ -274,7 +291,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075992631125",
                 description="스프링스틴의 대표작. 양호한 상태입니다.",
-                albumImage="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500",
+                albumImage="/images/album/born_to_run.jpg",
                 sellerId=1,
                 likeCount=41
             ),
@@ -287,7 +304,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992841421",
                 description="클래식 음악의 보석. 완벽한 상태입니다.",
-                albumImage="https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=500&h=500",
+                albumImage="/images/album/purple_rain.jpg",
                 sellerId=1,
                 likeCount=34
             ),
@@ -300,7 +317,7 @@ def init_default_data():
                 tradeMethod="DIRECT",
                 barcode="0075992234521",
                 description="90년대 힙합의 명작. 약간의 사용감이 있습니다.",
-                albumImage="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500",
+                albumImage="/images/album/born_to_run.jpg",
                 sellerId=1,
                 likeCount=29
             ),
@@ -313,7 +330,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992145621",
                 description="일렉트로닉 뮤직의 걸작. 거의 새것 같습니다.",
-                albumImage="https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=500&h=500",
+                albumImage="/images/album/discovery.jpg",
                 sellerId=1,
                 likeCount=67
             )
@@ -403,7 +420,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(request.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"success": False, "message": "로그인 실패", "errors": [{"code": "INVALID_CREDENTIALS", "message": "이메일 또는 비밀번호가 올바르지 않습니다."}]})
 
-    token = create_access_token(data={"sub": str(user.id), "email": user.email}, expires_delta=timedelta(minutes=30))
+    token = create_access_token(data={"sub": str(user.id), "email": user.email})
 
     return BaseResponse(success=True, message="로그인 성공", data={"token": token, "user": {"id": user.id, "email": user.email, "name": user.name, "phone": user.phone}})
 
@@ -434,7 +451,7 @@ async def login_v2(request: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(request.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"success": False, "message": "로그인 실패", "errors": [{"code": "INVALID_CREDENTIALS", "message": "이메일 또는 비밀번호가 올바르지 않습니다."}]})
 
-    token = create_access_token(data={"sub": str(user.id), "email": user.email}, expires_delta=timedelta(minutes=30))
+    token = create_access_token(data={"sub": str(user.id), "email": user.email})
 
     return BaseResponse(success=True, message="로그인 성공", data={"token": token, "user": {"id": user.id, "email": user.email, "name": user.name}})
 
@@ -483,6 +500,7 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
 
 @app.get("/products", response_model=BaseResponse, tags=["products"])
 async def list_products(
+    http_request: Request,
     sort: str = Query("recent"),
     keyword: Optional[str] = Query(None),
     genres: Optional[str] = Query(None),
@@ -530,21 +548,23 @@ async def list_products(
     from schemas import PaginationInfo
     pagination = PaginationInfo(page=page, size=size, totalCount=total_count, totalPages=(total_count + size - 1) // size, hasNext=page < (total_count + size - 1) // size)
 
-    return BaseResponse(success=True, data=[{"id": p.id, "albumName": p.albumName, "artist": p.artist, "genre": p.genre, "condition": p.condition, "price": p.price, "tradeMethod": p.tradeMethod, "albumImage": p.albumImage, "likeCount": p.likeCount, "createdAt": p.createdAt.isoformat() + "Z"} for p in products], pagination=pagination)
+    return BaseResponse(success=True, data=[{"id": p.id, "albumName": p.albumName, "artist": p.artist, "genre": p.genre, "condition": p.condition, "price": p.price, "tradeMethod": p.tradeMethod, "albumImage": resolve_image_url(http_request, p.albumImage), "likeCount": p.likeCount, "createdAt": p.createdAt.isoformat() + "Z"} for p in products], pagination=pagination)
 
 @app.get("/products/me", response_model=BaseResponse, tags=["products"])
 async def get_my_products(
+    http_request: Request,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     """내 상품 조회"""
     user_id = current_user["user_id"]
     products = db.query(ProductModel).filter(ProductModel.sellerId == user_id).all()
-    return BaseResponse(success=True, data=[{"id": p.id, "albumName": p.albumName, "artist": p.artist, "genre": p.genre, "condition": p.condition, "price": p.price, "tradeMethod": p.tradeMethod, "albumImage": p.albumImage, "createdAt": p.createdAt.isoformat() + "Z"} for p in products])
+    return BaseResponse(success=True, data=[{"id": p.id, "albumName": p.albumName, "artist": p.artist, "genre": p.genre, "condition": p.condition, "price": p.price, "tradeMethod": p.tradeMethod, "albumImage": resolve_image_url(http_request, p.albumImage), "createdAt": p.createdAt.isoformat() + "Z"} for p in products])
 
 @app.get("/products/{product_id}", response_model=BaseResponse, tags=["products"])
 async def get_product(
     product_id: int,
+    http_request: Request,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -558,15 +578,16 @@ async def get_product(
     if product.sellerId:
         seller_user = db.query(UserModel).filter(UserModel.id == product.sellerId).first()
         if seller_user:
-            seller = {"id": seller_user.id, "name": seller_user.name, "email": seller_user.email, "profileImage": seller_user.profileImage}
+            seller = {"id": seller_user.id, "name": seller_user.name, "email": seller_user.email, "profileImage": resolve_image_url(http_request, seller_user.profileImage)}
 
-    return BaseResponse(success=True, data={"id": product.id, "albumName": product.albumName, "artist": product.artist, "genre": product.genre, "condition": product.condition, "conditionDescription": CONDITION_DESCRIPTIONS.get(product.condition, ""), "price": product.price, "tradeMethod": product.tradeMethod, "barcode": product.barcode, "description": product.description, "albumImage": product.albumImage, "seller": seller, "likeCount": product.likeCount, "createdAt": product.createdAt.isoformat() + "Z"})
+    return BaseResponse(success=True, data={"id": product.id, "albumName": product.albumName, "artist": product.artist, "genre": product.genre, "condition": product.condition, "conditionDescription": CONDITION_DESCRIPTIONS.get(product.condition, ""), "price": product.price, "tradeMethod": product.tradeMethod, "barcode": product.barcode, "description": product.description, "albumImage": resolve_image_url(http_request, product.albumImage), "seller": seller, "likeCount": product.likeCount, "createdAt": product.createdAt.isoformat() + "Z"})
 
 # ==================== 상품 관리 API ====================
 
 @app.post("/products", response_model=BaseResponse, status_code=status.HTTP_201_CREATED, tags=["products"])
 async def create_product(
     request: ProductCreateRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -596,7 +617,7 @@ async def create_product(
     db.commit()
     db.refresh(new_product)
 
-    return BaseResponse(success=True, message="상품이 등록되었습니다.", data={"id": new_product.id, "albumName": new_product.albumName, "artist": new_product.artist, "genre": new_product.genre, "condition": new_product.condition, "price": new_product.price, "tradeMethod": new_product.tradeMethod, "barcode": new_product.barcode, "description": new_product.description, "albumImage": new_product.albumImage, "createdAt": new_product.createdAt.isoformat() + "Z"})
+    return BaseResponse(success=True, message="상품이 등록되었습니다.", data={"id": new_product.id, "albumName": new_product.albumName, "artist": new_product.artist, "genre": new_product.genre, "condition": new_product.condition, "price": new_product.price, "tradeMethod": new_product.tradeMethod, "barcode": new_product.barcode, "description": new_product.description, "albumImage": resolve_image_url(http_request, new_product.albumImage), "createdAt": new_product.createdAt.isoformat() + "Z"})
 
 @app.delete("/products/{product_id}", response_model=BaseResponse, tags=["products"])
 async def delete_product(
@@ -621,28 +642,52 @@ async def delete_product(
 @app.post("/upload/image", response_model=BaseResponse, status_code=status.HTTP_201_CREATED, tags=["upload"])
 async def upload_image(
     request: ImageUploadRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     """이미지 업로드"""
+    import base64
+    import random
+    import re
+    import string
+    from datetime import datetime
 
-    if not request.image.startswith("data:image/"):
+    match = re.match(r"^data:image/(?P<ext>[a-zA-Z0-9.+-]+);base64,(?P<data>.+)$", request.image, re.DOTALL)
+    if not match:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_FORMAT", "message": "올바른 이미지 형식이 아닙니다."}]})
 
-    from datetime import datetime
-    import random
-    import string
+    ext = match.group("ext").lower()
+    ext = "jpg" if ext in ("jpeg", "jpg") else ext
+    if ext not in ("jpg", "png", "gif", "webp"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_FORMAT", "message": "올바른 이미지 형식이 아닙니다."}]})
+
+    try:
+        image_bytes = base64.b64decode(match.group("data"), validate=True)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_FORMAT", "message": "올바른 이미지 형식이 아닙니다."}]})
+
+    max_bytes = settings.max_image_size_mb * 1024 * 1024
+    if len(image_bytes) > max_bytes:
+        raise HTTPException(status_code=status.HTTP_413_CONTENT_TOO_LARGE, detail={"success": False, "message": "이미지 업로드 실패", "errors": [{"code": "FILE_TOO_LARGE", "message": f"이미지 크기는 {settings.max_image_size_mb}MB 이하여야 합니다."}]})
+
     timestamp = datetime.utcnow().strftime("%Y%m%d")
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
     image_type = "album" if request.type == "ALBUM" else "profile"
-    image_url = f"https://api.vinylgroove.com/images/{image_type}/uploaded_{timestamp}_{random_str}.jpg"
+    filename = f"uploaded_{timestamp}_{random_str}.{ext}"
 
-    return BaseResponse(success=True, message="이미지가 업로드되었습니다.", data={"imageUrl": image_url, "type": request.type, "size": len(request.image), "uploadedAt": datetime.utcnow().isoformat() + "Z"})
+    with open(os.path.join(UPLOAD_DIR, image_type, filename), "wb") as f:
+        f.write(image_bytes)
+
+    image_url = f"{str(http_request.base_url).rstrip('/')}/images/{image_type}/{filename}"
+
+    return BaseResponse(success=True, message="이미지가 업로드되었습니다.", data={"imageUrl": image_url, "type": request.type, "size": len(image_bytes), "uploadedAt": datetime.utcnow().isoformat() + "Z"})
 
 # ==================== 알림 API ====================
 
 @app.get("/notifications", response_model=BaseResponse, tags=["notifications"])
 async def get_notifications(
+    http_request: Request,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -656,7 +701,7 @@ async def get_notifications(
     for notif in notifications:
         product = db.query(ProductModel).filter(ProductModel.id == notif.productId).first()
         if product:
-            notification_list.append({"id": notif.id, "type": notif.type, "title": "가격 인하" if notif.type == "PRICE_DOWN" else "가격 인상", "productId": notif.productId, "albumName": product.albumName, "artist": product.artist, "albumImage": product.albumImage, "previousPrice": notif.previousPrice, "currentPrice": notif.currentPrice, "isRead": notif.isRead, "createdAt": notif.createdAt.isoformat() + "Z"})
+            notification_list.append({"id": notif.id, "type": notif.type, "title": "가격 인하" if notif.type == "PRICE_DOWN" else "가격 인상", "productId": notif.productId, "albumName": product.albumName, "artist": product.artist, "albumImage": resolve_image_url(http_request, product.albumImage), "previousPrice": notif.previousPrice, "currentPrice": notif.currentPrice, "isRead": notif.isRead, "createdAt": notif.createdAt.isoformat() + "Z"})
 
     return BaseResponse(success=True, data={"unreadCount": unread_count, "notifications": notification_list})
 
@@ -713,14 +758,14 @@ async def init_sample_data(db: Session = Depends(get_db)):
             password=hash_password("Seller1234!@"),
             name="레코드 판매자",
             phone="010-1111-2222",
-            profileImage="https://api.vinylgroove.com/images/profile/seller.jpg"
+            profileImage="/images/profile/seller.jpg"
         ),
         UserModel(
             email="buyer@example.com",
             password=hash_password("Buyer1234!@"),
             name="구매자",
             phone="010-3333-4444",
-            profileImage="https://api.vinylgroove.com/images/profile/buyer.jpg"
+            profileImage="/images/profile/buyer.jpg"
         )
     ]
     db.add_all(test_users)
@@ -737,7 +782,7 @@ async def init_sample_data(db: Session = Depends(get_db)):
             tradeMethod="BOTH",
             barcode="0075992605138",
             description="Fleetwood Mac의 명작 앨범. 거의 새것 같은 상태입니다.",
-            albumImage="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500",
+            albumImage="/images/album/rumours.jpg",
             sellerId=1,
             likeCount=45
         ),
@@ -750,7 +795,7 @@ async def init_sample_data(db: Session = Depends(get_db)):
             tradeMethod="DELIVERY",
             barcode="0016861829425",
             description="재즈의 명반. 약간의 사용감이 있지만 재생에는 문제없습니다.",
-            albumImage="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500&h=500",
+            albumImage="/images/album/kind_of_blue.jpg",
             sellerId=1,
             likeCount=32
         ),
@@ -763,7 +808,7 @@ async def init_sample_data(db: Session = Depends(get_db)):
             tradeMethod="BOTH",
             barcode="0082408029621",
             description="전설적인 팝앨범. 개봉했지만 완벽한 상태입니다.",
-            albumImage="https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=500&h=500",
+            albumImage="/images/album/thriller.jpg",
             sellerId=1,
             likeCount=78
         ),
@@ -776,7 +821,7 @@ async def init_sample_data(db: Session = Depends(get_db)):
             tradeMethod="DIRECT",
             barcode="0077923614627",
             description="Prince의 걸작. 약간의 스크래치가 있습니다.",
-            albumImage="https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=500&h=500",
+            albumImage="/images/album/purple_rain.jpg",
             sellerId=1,
             likeCount=56
         ),
@@ -789,7 +834,7 @@ async def init_sample_data(db: Session = Depends(get_db)):
             tradeMethod="BOTH",
             barcode="0077776184025",
             description="비틀즈의 마지막 앨범. 매우 좋은 상태입니다.",
-            albumImage="https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=500&h=500",
+            albumImage="/images/album/abbey_road.jpg",
             sellerId=1,
             likeCount=102
         ),
@@ -802,7 +847,7 @@ async def init_sample_data(db: Session = Depends(get_db)):
             tradeMethod="BOTH",
             barcode="0054429161320",
             description="프로그레시브 록의 명작. 거의 새것입니다.",
-            albumImage="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500",
+            albumImage="/images/album/rumours.jpg",
             sellerId=1,
             likeCount=88
         ),
@@ -815,7 +860,7 @@ async def init_sample_data(db: Session = Depends(get_db)):
             tradeMethod="DELIVERY",
             barcode="0075992631125",
             description="스프링스틴의 대표작. 양호한 상태입니다.",
-            albumImage="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500",
+            albumImage="/images/album/born_to_run.jpg",
             sellerId=1,
             likeCount=41
         ),
@@ -828,7 +873,7 @@ async def init_sample_data(db: Session = Depends(get_db)):
             tradeMethod="BOTH",
             barcode="0075992841421",
             description="클래식 음악의 보석. 완벽한 상태입니다.",
-            albumImage="https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=500&h=500",
+            albumImage="/images/album/purple_rain.jpg",
             sellerId=1,
             likeCount=34
         ),
@@ -841,7 +886,7 @@ async def init_sample_data(db: Session = Depends(get_db)):
             tradeMethod="DIRECT",
             barcode="0075992234521",
             description="90년대 힙합의 명작. 약간의 사용감이 있습니다.",
-            albumImage="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500",
+            albumImage="/images/album/born_to_run.jpg",
             sellerId=1,
             likeCount=29
         ),
@@ -854,7 +899,7 @@ async def init_sample_data(db: Session = Depends(get_db)):
             tradeMethod="BOTH",
             barcode="0075992145621",
             description="일렉트로닉 뮤직의 걸작. 거의 새것 같습니다.",
-            albumImage="https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=500&h=500",
+            albumImage="/images/album/discovery.jpg",
             sellerId=1,
             likeCount=67
         )

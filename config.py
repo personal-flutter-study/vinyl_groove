@@ -9,7 +9,6 @@ class Settings(BaseSettings):
     debug: bool = True
     secret_key: str = "your-secret-key-change-this-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
     database_url: str = "sqlite:///./vinyl_groove.db"
     max_image_size_mb: int = 10
     cors_origins: list = ["*"]

@@ -63,9 +63,14 @@ python -m uvicorn app:app --host 0.0.0.0 --port 3000 --reload
 
 서버가 시작되면 `http://localhost:8000/docs` 에서 Swagger UI를 볼 수 있습니다. (포트 변경 시 해당 포트 번호로 접속)
 
-**참고:** 서버 시작 시 자동으로 10개의 샘플 앨범과 테스트 사용자가 생성됩니다.
-- 테스트 이메일: `seller@example.com` / `buyer@example.com`
-- 테스트 비밀번호: `Seller1234!@` / `Buyer1234!@`
+서버를 처음 시작하면 10개의 샘플 앨범과 아래 테스트 계정이 자동으로 생성됩니다. (DB에 이미 사용자가 있으면 스킵되므로, 다시 생성하려면 `vinyl_groove.db`를 지우고 재시작)
+
+## 🔑 테스트 계정
+
+| 이메일 | 비밀번호 | 역할 |
+|---|---|---|
+| `seller@example.com` | `Seller1234!@` | 판매자 (레코드 판매자) |
+| `buyer@example.com` | `Buyer1234!@` | 구매자 |
 
 ## 📚 API 엔드포인트
 

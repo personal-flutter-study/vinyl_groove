@@ -1,7 +1,6 @@
 """
 JWT 인증
 """
-from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from fastapi import HTTPException, status, Depends, Query
@@ -10,14 +9,10 @@ from config import settings
 
 security = HTTPBearer(auto_error=False)
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+def create_access_token(data: dict) -> str:
+    # exp(만료시각)를 넣지 않는다: payload가 계정 정보만으로 고정되므로,
+    # 같은 계정으로 로그인할 때마다 항상 동일한 토큰 문자열이 발급된다.
+    encoded_jwt = jwt.encode(data, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
 
 def verify_token(token: str) -> dict:

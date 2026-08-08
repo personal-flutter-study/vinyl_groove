@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
+import 'package:vinyl_groove_poc_1/app_ctrl.dart';
 import 'package:vinyl_groove_poc_1/screens/alert_screen.dart';
 
 import 'main.dart';
@@ -31,30 +30,11 @@ class _AlertWidgetState extends State<AlertWidget> {
 
   @override
   void initState() {
-    timer = Timer.periodic(Duration(seconds: 30), (timer) async {
-      get(
-        Uri.parse('http://${baseUrl}/notifications'),
-        headers: authHeader,
-      ).then((value) async {
-        final body = jsonDecode(value.body);
-        if (value.statusCode == 200) {
-          alerts = body['data'];
-          setState(() {});
-        }
-      });
-    });
+    timer = Timer.periodic(Duration(seconds: 30), (timer) async {});
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      get(
-        Uri.parse('http://${baseUrl}/notifications'),
-        headers: authHeader,
-      ).then((value) async {
-        final body = jsonDecode(value.body);
-        if (value.statusCode == 200) {
-          alerts = body['data'];
-          setState(() {});
-        }
-      });
+      alerts = await appCtrl.loadAlerts();
+      setState(() {});
     });
 
     super.initState();
@@ -68,17 +48,24 @@ class _AlertWidgetState extends State<AlertWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final count = alerts?['unreadCount'];
+
     return IconButton(
-      onPressed: () {
+      onPressed: () async {
         if (alerts != null) {
-          context.go(AlertScreen(alerts: alerts?['notifications'] ?? []));
+          await context.go(AlertScreen());
+          alerts = await appCtrl.loadAlerts();
+          setState(() {});
         }
         //context.message('알림 기능은 중비중 입니다.');
       },
-      icon: alerts?['unreadCount'] == null
+      icon: count == null || count <= 0
           ? Icon(Icons.notifications_none, color: Colors.white, size: 32)
-          : Badge.count(
-              count: alerts!['unreadCount'],
+          : Badge(
+              label: Text(
+                count >= 10 ? '9+' : count.toString(),
+                style: TextStyle(color: Colors.white),
+              ),
               child: Icon(
                 Icons.notifications_none,
                 color: Colors.white,

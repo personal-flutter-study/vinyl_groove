@@ -100,24 +100,29 @@ class AppCtrl {
       }
       return null;
     });
-
-
-
-
-
-
   }
 
+  Future<dynamic> loadAlbumDetail(id) =>
+      get(
+        Uri.parse('http://${baseUrl}/products/${id}'),
+        headers: authHeader,
+      ).then((value) async {
+        final body = jsonDecode(value.body);
+        if (value.statusCode == 200) {
+          return body['data'];
+        }
+      });
 
-  loadAlbumDetail(id) => get(
-    Uri.parse('http://${baseUrl}/products/${id}'),
-    headers: authHeader,
-  ).then((value) async {
-    final body = jsonDecode(value.body);
-    if (value.statusCode == 200) {
-       return  body['data'];
-    }
-  });
+  Future<dynamic> loadAlerts() =>
+      get(
+        Uri.parse('http://${baseUrl}/notifications'),
+        headers: authHeader,
+      ).then((value) async {
+        final body = jsonDecode(value.body);
+        if (value.statusCode == 200) {
+          return body['data'];
+        }
+      });
 }
 
 enum Sort {

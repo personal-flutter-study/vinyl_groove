@@ -1,7 +1,4 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:vinyl_groove_poc_1/app_ctrl.dart';
 import 'package:vinyl_groove_poc_1/main.dart';
@@ -24,7 +21,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      detail = appCtrl.loadAlbumDetail(widget.albumModel.id);
+      detail = await appCtrl.loadAlbumDetail(widget.albumModel.id);
       setState(() {});
     });
 

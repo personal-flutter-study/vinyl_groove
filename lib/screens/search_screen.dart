@@ -9,6 +9,7 @@ import '../app_ctrl.dart';
 import '../main.dart';
 import '../widgets/like_button.dart';
 import 'album_screen.dart';
+import 'barcode_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -120,7 +121,9 @@ class _SearchScreenState extends State<SearchScreen> {
                           )
                         : IconButton(
                             onPressed: () {
-                              context.message('바코드 검색을 현재 준비중에 있습니다.');
+                              context.go(BarcodeScreen());
+
+                              //context.message('바코드 검색을 현재 준비중에 있습니다.');
                             },
                             icon: AppIcon.barcodescan.icon(
                               color: Colors.white60,

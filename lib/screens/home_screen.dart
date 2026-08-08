@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:vinyl_groove_poc_1/app_ctrl.dart';
 import 'package:vinyl_groove_poc_1/screens/album_screen.dart';
+import 'package:vinyl_groove_poc_1/screens/barcode_screen.dart';
 import 'package:vinyl_groove_poc_1/widgets.dart';
 import 'package:vinyl_groove_poc_1/widgets/like_button.dart';
 import 'package:vinyl_groove_poc_1/widgets/record_widget.dart';
@@ -63,7 +64,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         hintStyle: TextStyle(color: Colors.white60),
                         hintText: '앨범명, 아티스트 검색',
                         suffixIcon: IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            context.go(BarcodeScreen());
+                          },
                           icon: SvgPicture.asset(
                             'assets/icons/barcode-scan.svg',
                             color: Colors.white60,

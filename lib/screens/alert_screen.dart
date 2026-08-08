@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
@@ -8,43 +9,105 @@ import 'package:vinyl_groove_poc_1/screens/album_screen.dart';
 import '../main.dart';
 
 class AlertScreen extends StatefulWidget {
-  const AlertScreen({super.key, required this.alerts});
-
-  final List alerts;
+  const AlertScreen({super.key});
 
   @override
   State<AlertScreen> createState() => _AlertScreenState();
 }
 
 class _AlertScreenState extends State<AlertScreen> {
-  Future<void> readAlert({id, all}) async {
-    put(
-      Uri.parse(
-        'http://${baseUrl}/notifications/read',
-      ).replace(queryParameters: {"all": all, "id": id}),
-      headers: {...authHeader, ...jsonHeader},
-    ).then((value) {
-      final body = value.body;
+  Map? alerts;
 
-      if (value.statusCode == 200) {
-        return true;
-      }
+  Future<bool> readAlert({id, all}) =>
+      put(
+        Uri.parse('http://${baseUrl}/notifications/read').replace(
+          queryParameters: {"all": all?.toString(), "id": id?.toString()}
+            ..removeWhere((key, value) => value == null),
+        ),
+        headers: {...authHeader, ...jsonHeader},
+      ).then((value) {
+        final body = value.body;
 
-      return false;
+        if (value.statusCode == 200) {
+          return true;
+        }
+
+        return false;
+      });
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      appCtrl.loadAlerts().then((value) {
+        alerts = value;
+        setState(() {});
+      });
     });
+
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    final alerts = widget.alerts;
+    final alerts = (this.alerts?['notifications'] as List?) ?? [];
 
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
           actions: [
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.more_vert, color: Colors.white),
+            PopupMenuButton(
+              color: black,
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  onTap: () async {
+                    await readAlert(all: true);
+                    this.alerts = await appCtrl.loadAlerts();
+                    setState(() {});
+                  },
+                  child: Text('모두 읽음', style: TextStyle(color: Colors.white)),
+                ),
+                PopupMenuItem(
+                  onTap: () async {
+                    showCupertinoDialog(
+                      context: context,
+                      builder: (context) => CupertinoAlertDialog(
+                        title: Text('알림 전체 삭제'),
+                        actions: [
+                          CupertinoButton(
+                            child: Text('취소'),
+                            onPressed: () {
+                              context.back();
+                            },
+                          ),
+                          CupertinoButton(
+                            child: Text('삭제'),
+                            onPressed: () async {
+                              await delete(
+                                Uri.parse('http://${baseUrl}/notifications'),
+                                headers: {...authHeader, ...jsonHeader},
+                              ).then((value) async {
+                                final body = value.body;
+
+                                if (value.statusCode == 200) {
+                                  this.alerts = await appCtrl.loadAlerts();
+                                  setState(() {});
+                                  return true;
+                                }
+
+                                return false;
+                              });
+
+                              context.back();
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: Text('전체 삭제', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+              child: Icon(Icons.more_vert, color: Colors.white),
             ),
           ],
           leading: IconButton(
@@ -98,19 +161,26 @@ class _AlertScreenState extends State<AlertScreen> {
 
                     final incre = priceP <= priceC;
 
-                    final id = e['id'];
+                    final albumId = e['productId'];
+                    final notificationId = e['id'];
 
                     return ListTile(
-                      onTap: () {
-                        readAlert(id: id).then((value) {
-                          context.go(
-                            AlbumScreen(
-                              albumModel: AlbumModel.from(
-                                appCtrl.loadAlbumDetail(id),
-                              ),
+                      onTap: () async {
+                        print(notificationId);
+                        print(await readAlert(id: notificationId));
+
+                        await context.go(
+                          AlbumScreen(
+                            albumModel: AlbumModel.from(
+                              await appCtrl.loadAlbumDetail(albumId),
                             ),
-                          );
-                        });
+                          ),
+                        );
+
+                        this.alerts = await appCtrl.loadAlerts();
+                        print('로드');
+
+                        setState(() {});
                       },
                       tileColor: !read ? yellow.withAlpha(10) : null,
                       contentPadding: .all(8),

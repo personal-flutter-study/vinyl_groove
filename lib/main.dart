@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -9,10 +9,14 @@ import 'package:vinyl_groove_poc_1/screens/login_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  cameras = await availableCameras();
+
   prefs = await SharedPreferences.getInstance();
 
   runApp(MaterialApp(home: LoginScreen()));
 }
+
+List<CameraDescription> cameras = [];
 
 const yellow = Color(0xffD3A44B);
 const black = Color(0xff121212);
@@ -29,13 +33,12 @@ get authHeader => {'Authorization': 'Bearer ${appCtrl.tkn}'};
 final channelM = MethodChannel('com.example.vinyl_groove_poc_1_m');
 
 extension QB on BuildContext {
-  go(Widget page) =>
+  Future<dynamic> go(Widget page) =>
       Navigator.push(this, MaterialPageRoute(builder: (context) => page));
 
   back() => Navigator.pop(this);
 
   message(m) => channelM.invokeMethod('t', {'m': m});
-
 }
 
 enum AppIcon {

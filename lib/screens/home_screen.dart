@@ -64,8 +64,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         hintStyle: TextStyle(color: Colors.white60),
                         hintText: '앨범명, 아티스트 검색',
                         suffixIcon: IconButton(
-                          onPressed: () {
-                            context.go(BarcodeScreen());
+                          onPressed: () async {
+                            final res = await context.go(BarcodeScreen());
+
+                            context.go(
+                              AlbumScreen(
+                                albumModel: AlbumModel.from(
+                                  await appCtrl.loadAlbumDetail(
+                                    (res as List).first['id'],
+                                  ),
+                                ),
+                              ),
+                            );
                           },
                           icon: SvgPicture.asset(
                             'assets/icons/barcode-scan.svg',

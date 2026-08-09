@@ -120,8 +120,18 @@ class _SearchScreenState extends State<SearchScreen> {
                             icon: Icon(Icons.close, color: Colors.white60),
                           )
                         : IconButton(
-                            onPressed: () {
-                              context.go(BarcodeScreen());
+                            onPressed: () async {
+                              final res = await context.go(BarcodeScreen());
+
+                              print(res);
+
+                              context.go(
+                                AlbumScreen(
+                                  albumModel: AlbumModel.from(await appCtrl.loadAlbumDetail(
+                                    (res as List).first['id'],
+                                  )),
+                                ),
+                              );
 
                               //context.message('바코드 검색을 현재 준비중에 있습니다.');
                             },

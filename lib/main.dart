@@ -36,7 +36,7 @@ extension QB on BuildContext {
   Future<dynamic> go(Widget page) =>
       Navigator.push(this, MaterialPageRoute(builder: (context) => page));
 
-  back() => Navigator.pop(this);
+  back([result]) => Navigator.pop(this, result);
 
   message(m) => channelM.invokeMethod('t', {'m': m});
 }

@@ -40,17 +40,13 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
             return false;
           }
 
-          context.go(
-            AlbumScreen(
-              albumModel: AlbumModel.from(
-                await appCtrl.loadAlbumDetail(res.first['id']),
-              ),
-            ),
-          );
+          context.back(res);
 
           return true;
         }
       });
+
+  bool scanning = false;
 
   @override
   void initState() {
@@ -63,6 +59,33 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
       try {
         await camera.initialize();
         setState(() {});
+
+        camera.startImageStream((image) async {
+          if (scanning) return;
+          scanning = true;
+
+          try {
+            final res = await channelM.invokeMethod('scan', {
+              'bytes': image.planes[0].bytes,
+              'width': image.width,
+              'height': image.height,
+              "rowStride": image.planes[0].bytesPerRow,
+            });
+
+            print(res);
+
+            if (res != null) {
+              camera.stopImageStream();
+              await search(res);
+            }
+          } catch (e) {
+            print(e);
+          }
+
+          await Future.delayed(Duration(milliseconds: 500));
+
+          scanning = false;
+        });
       } catch (e) {
         print(e);
         context.message('카메라 권한이 필요합니다');
@@ -72,6 +95,12 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
     });
 
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    camera.dispose();
+    super.dispose();
   }
 
   @override
@@ -113,7 +142,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                     Positioned.fill(child: CameraPreview(camera)),
 
                     ColorFiltered(
-                      colorFilter: .mode(Colors.white.withAlpha(1), .srcOut),
+                      colorFilter: .mode(Colors.black.withAlpha(200), .srcOut),
                       child: Stack(
                         children: [
                           Positioned.fill(
@@ -124,8 +153,8 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
 
                           Center(
                             child: Container(
-                              color: Colors.white.withAlpha(1),
-                              height: 100,
+                              color: Colors.white,
+                              height: 150,
                               width: 250,
                             ),
                           ),
@@ -133,25 +162,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                       ),
                     ),
 
-                    Center(
-                      child: SizedBox(
-                        height: 100,
-                        width: 250,
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              child: Container(
-                                height: 8,
-                                width: 2,
-                                color: yellow,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    Center(child: barcodeBox()),
                   ],
                 ),
               ),
@@ -283,6 +294,59 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  SizedBox barcodeBox() {
+    return SizedBox(
+      height: 150,
+      width: 250,
+      child: Stack(
+        children: [
+          Center(child: Divider(thickness: 1.5, color: yellow)),
+
+          Positioned(
+            top: 0,
+            left: 0,
+            child: Container(height: 12, width: 2, color: yellow),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            child: Container(height: 2, width: 12, color: yellow),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            child: Container(height: 12, width: 2, color: yellow),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            child: Container(height: 2, width: 12, color: yellow),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(height: 12, width: 2, color: yellow),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(height: 2, width: 12, color: yellow),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(height: 12, width: 2, color: yellow),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(height: 2, width: 12, color: yellow),
+          ),
+        ],
       ),
     );
   }

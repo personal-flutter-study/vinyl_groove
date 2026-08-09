@@ -64,6 +64,12 @@ enum AppIcon {
   visibility('visibility.svg'),
   barcodescan('barcode-scan.svg'),
   delete('delete.svg'),
+  edit('edit.svg'),
+  help('help.svg'),
+  history('history.svg'),
+  info('info.svg'),
+  inventory('inventory.svg'),
+  shopping('shopping-bag.svg'),
   visibilityoff('visibility-off.svg');
 
   final String p;

@@ -24,6 +24,26 @@ class _SearchScreenState extends State<SearchScreen> {
   Map? page;
   List<AlbumModel> albums = [];
 
+  selGenre(Genre genre) {
+    if (genre == .WH) {
+      genres.clear();
+      genres.add(genre);
+    } else {
+      genres.remove(Genre.WH);
+      if (!genres.remove(genre)) genres.add(genre);
+    }
+  }
+
+  selCondition(Condition con) {
+    if (con == .WH) {
+      conditions.clear();
+      conditions.add(con);
+    } else {
+      conditions.remove(Condition.WH);
+      if (!conditions.remove(con)) conditions.add(con);
+    }
+  }
+
   refresh([bool load = false]) => appCtrl
       .loadAlbums(
         size: 12,
@@ -49,8 +69,8 @@ class _SearchScreenState extends State<SearchScreen> {
         return value;
       });
 
-  List<Genre> genres = [.WH];
-  List<Condition> conditions = [.WH];
+  List<Genre> genres = [];
+  List<Condition> conditions = [];
   Trade trade = .WH;
 
   Sort sort = .recent;
@@ -74,7 +94,7 @@ class _SearchScreenState extends State<SearchScreen> {
       });
 
     if (appCtrl.genre != null && !genres.contains(appCtrl.genre)) {
-      genres.add(appCtrl.genre!);
+      selGenre(appCtrl.genre!);
     }
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       refresh();
@@ -127,9 +147,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
                               context.go(
                                 AlbumScreen(
-                                  albumModel: AlbumModel.from(await appCtrl.loadAlbumDetail(
-                                    (res as List).first['id'],
-                                  )),
+                                  albumModel: AlbumModel.from(
+                                    await appCtrl.loadAlbumDetail(
+                                      (res as List).first['id'],
+                                    ),
+                                  ),
                                 ),
                               );
 
@@ -393,7 +415,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             ),
                             onPressed: () {
                               setState(() {
-                                if (!genres.remove(e)) genres.add(e);
+                                selGenre(e);
                               });
                               refresh();
                             },
@@ -439,7 +461,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             ),
                             onPressed: () async {
                               setState(() {
-                                if (!conditions.remove(e)) conditions.add(e);
+                                selCondition(e);
                               });
 
                               refresh();

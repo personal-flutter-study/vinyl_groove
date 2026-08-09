@@ -145,7 +145,7 @@ enum Genre {
   ELECTRONIC('ELECTRONIC', 'Electronic', AppIcon.electronic),
   CLASSICAL('CLASSICAL', 'Classical', AppIcon.classical),
   RNB_SOUL('RNB_SOUL', 'R&B/Soul', AppIcon.rnb),
-  ETC('ETC', '기타', AppIcon.etc);
+  ETC('ETC', 'Etc', AppIcon.etc);
 
   final String v;
   final String l;

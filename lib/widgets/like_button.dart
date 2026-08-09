@@ -7,9 +7,11 @@ import 'package:vinyl_groove_poc_1/models/album_model.dart';
 import '../app_ctrl.dart';
 
 class LikeButton extends StatefulWidget {
-  const LikeButton({super.key, required this.albumModel});
+  const LikeButton({super.key, required this.albumModel, this.action});
 
   final AlbumModel albumModel;
+
+  final VoidCallback? action;
 
   @override
   State<LikeButton> createState() => _LikeButtonState();
@@ -32,7 +34,9 @@ class _LikeButtonState extends State<LikeButton> {
             onPressed: () async {
               press = true;
               setState(() {});
-              if (!appCtrl.likes.remove(album)) {
+
+              widget.action?.call();
+              if (widget.action == null && !appCtrl.likes.remove(album)) {
                 appCtrl.likes.add(album);
               }
               await Future.delayed(Duration(milliseconds: 200));

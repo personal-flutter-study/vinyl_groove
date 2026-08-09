@@ -4,6 +4,7 @@ import 'package:vinyl_groove_poc_1/main.dart';
 import 'package:vinyl_groove_poc_1/screens/home_screen.dart';
 import 'package:vinyl_groove_poc_1/screens/like_screen.dart';
 import 'package:vinyl_groove_poc_1/screens/my_screen.dart';
+import 'package:vinyl_groove_poc_1/screens/register_screen.dart';
 import 'package:vinyl_groove_poc_1/screens/search_screen.dart';
 
 class BaseScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class _BaseScreenState extends State<BaseScreen> {
           final pages = [
             HomeScreen(),
             SearchScreen(),
+            SizedBox(),
             LikeScreen(),
             MyScreen(),
           ];
@@ -33,6 +35,11 @@ class _BaseScreenState extends State<BaseScreen> {
               unselectedItemColor: Colors.white60,
               iconSize: 32,
               onTap: (value) {
+                if (value == 2) {
+                  context.go(RegisterScreen());
+                  return;
+                }
+
                 appCtrl.page.value = value;
               },
               type: .fixed,
@@ -43,6 +50,16 @@ class _BaseScreenState extends State<BaseScreen> {
                   label: '홈',
                 ),
                 BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
+
+                BottomNavigationBarItem(
+                  icon: CircleAvatar(
+                    radius: 24,
+                    backgroundColor: yellow,
+                    child: Icon(Icons.add),
+                  ),
+                  label: '',
+                ),
+
                 BottomNavigationBarItem(
                   icon: Icon(Icons.favorite_outline),
                   label: '관심상품',

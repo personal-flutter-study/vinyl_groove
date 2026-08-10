@@ -213,7 +213,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992605138",
                 description="Fleetwood Mac의 명작 앨범. 거의 새것 같은 상태입니다.",
-                albumImage="/images/album/rumours.jpg",
+                albumImage="",
                 sellerId=1,
                 likeCount=45
             ),
@@ -226,7 +226,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0016861829425",
                 description="재즈의 명반. 약간의 사용감이 있지만 재생에는 문제없습니다.",
-                albumImage="/images/album/kind_of_blue.jpg",
+                albumImage="",
                 sellerId=1,
                 likeCount=32
             ),
@@ -239,7 +239,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0082408029621",
                 description="전설적인 팝앨범. 개봉했지만 완벽한 상태입니다.",
-                albumImage="/images/album/thriller.jpg",
+                albumImage="",
                 sellerId=1,
                 likeCount=78
             ),
@@ -252,7 +252,7 @@ def init_default_data():
                 tradeMethod="DIRECT",
                 barcode="0077923614627",
                 description="Prince의 걸작. 약간의 스크래치가 있습니다.",
-                albumImage="/images/album/purple_rain.jpg",
+                albumImage="",
                 sellerId=1,
                 likeCount=56
             ),
@@ -265,7 +265,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0077776184025",
                 description="비틀즈의 마지막 앨범. 매우 좋은 상태입니다.",
-                albumImage="/images/album/abbey_road.jpg",
+                albumImage="",
                 sellerId=1,
                 likeCount=102
             ),
@@ -278,7 +278,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0054429161320",
                 description="프로그레시브 록의 명작. 거의 새것입니다.",
-                albumImage="/images/album/rumours.jpg",
+                albumImage="",
                 sellerId=1,
                 likeCount=88
             ),
@@ -291,7 +291,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075992631125",
                 description="스프링스틴의 대표작. 양호한 상태입니다.",
-                albumImage="/images/album/born_to_run.jpg",
+                albumImage="",
                 sellerId=1,
                 likeCount=41
             ),
@@ -304,7 +304,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992841421",
                 description="클래식 음악의 보석. 완벽한 상태입니다.",
-                albumImage="/images/album/purple_rain.jpg",
+                albumImage="",
                 sellerId=1,
                 likeCount=34
             ),
@@ -317,7 +317,7 @@ def init_default_data():
                 tradeMethod="DIRECT",
                 barcode="0075992234521",
                 description="90년대 힙합의 명작. 약간의 사용감이 있습니다.",
-                albumImage="/images/album/born_to_run.jpg",
+                albumImage="",
                 sellerId=1,
                 likeCount=29
             ),
@@ -330,9 +330,282 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992145621",
                 description="일렉트로닉 뮤직의 걸작. 거의 새것 같습니다.",
-                albumImage="/images/album/discovery.jpg",
+                albumImage="",
                 sellerId=1,
                 likeCount=67
+            ),
+            ProductModel(
+                albumName="Houses of the Holy",
+                artist="Led Zeppelin",
+                genre="ROCK",
+                condition="VG+",
+                price=98000,
+                tradeMethod="BOTH",
+                barcode="0075992341425",
+                description="LED ZEPPELIN의 명곡 모음. 양호한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=51
+            ),
+            ProductModel(
+                albumName="A Love Supreme",
+                artist="John Coltrane",
+                genre="JAZZ",
+                condition="NM",
+                price=88000,
+                tradeMethod="DELIVERY",
+                barcode="0075992451425",
+                description="존 콜트레인의 걸작. 거의 새것 같습니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=43
+            ),
+            ProductModel(
+                albumName="Nevermind",
+                artist="Nirvana",
+                genre="ROCK",
+                condition="VG",
+                price=75000,
+                tradeMethod="BOTH",
+                barcode="0075992551425",
+                description="Nirvana의 1집. 약간의 사용감이 있습니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=89
+            ),
+            ProductModel(
+                albumName="The Wall",
+                artist="Pink Floyd",
+                genre="ROCK",
+                condition="M",
+                price=105000,
+                tradeMethod="DELIVERY",
+                barcode="0075992651425",
+                description="Pink Floyd의 더블 앨범. 완벽한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=76
+            ),
+            ProductModel(
+                albumName="Thriller",
+                artist="Michael Jackson",
+                genre="POP",
+                condition="VG+",
+                price=92000,
+                tradeMethod="BOTH",
+                barcode="0075992751425",
+                description="팝의 왕 마이클 잭슨의 대표작 재출시. 양호 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=65
+            ),
+            ProductModel(
+                albumName="Taste of Honey",
+                artist="A Taste of Honey",
+                genre="JAZZ",
+                condition="EX",
+                price=45000,
+                tradeMethod="DIRECT",
+                barcode="0075992851425",
+                description="부드러운 재즈 음악. 약간의 사용감이 있으나 재생 양호합니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=27
+            ),
+            ProductModel(
+                albumName="Sketches of Spain",
+                artist="Miles Davis",
+                genre="JAZZ",
+                condition="NM",
+                price=85000,
+                tradeMethod="BOTH",
+                barcode="0075992951425",
+                description="Miles Davis의 스페인 풍 재즈. 완벽한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=38
+            ),
+            ProductModel(
+                albumName="Moanin'",
+                artist="Art Blakey",
+                genre="JAZZ",
+                condition="VG+",
+                price=68000,
+                tradeMethod="DELIVERY",
+                barcode="0075993051425",
+                description="Art Blakey의 재즈 명곡. 양호한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=31
+            ),
+            ProductModel(
+                albumName="Blue Train",
+                artist="John Coltrane",
+                genre="JAZZ",
+                condition="VG+",
+                price=75000,
+                tradeMethod="BOTH",
+                barcode="0075993151425",
+                description="콜트레인의 블루 트레인. 양호한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=44
+            ),
+            ProductModel(
+                albumName="Midnight Special",
+                artist="Bill Evans",
+                genre="JAZZ",
+                condition="NM",
+                price=80000,
+                tradeMethod="DELIVERY",
+                barcode="0075993251425",
+                description="Bill Evans의 미드나이트. 거의 새것 같습니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=35
+            ),
+            ProductModel(
+                albumName="My Funny Valentine",
+                artist="Chet Baker",
+                genre="JAZZ",
+                condition="VG+",
+                price=72000,
+                tradeMethod="DIRECT",
+                barcode="0075993351425",
+                description="Chet Baker의 낭만적인 재즈. 양호한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=29
+            ),
+            ProductModel(
+                albumName="Thelonious Monk Quartet",
+                artist="Thelonious Monk",
+                genre="JAZZ",
+                condition="NM",
+                price=90000,
+                tradeMethod="BOTH",
+                barcode="0075993451425",
+                description="Thelonious Monk의 4중주 앨범. 완벽한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=41
+            ),
+            ProductModel(
+                albumName="Giant Steps",
+                artist="John Coltrane",
+                genre="JAZZ",
+                condition="EX",
+                price=78000,
+                tradeMethod="BOTH",
+                barcode="0075993551425",
+                description="콜트레인의 거대한 발걸음. 좋은 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=52
+            ),
+            ProductModel(
+                albumName="Ballads",
+                artist="Bill Evans",
+                genre="JAZZ",
+                condition="VG",
+                price=65000,
+                tradeMethod="DELIVERY",
+                barcode="0075993651425",
+                description="Bill Evans의 발라드 모음. 약간의 사용감이 있습니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=26
+            ),
+            ProductModel(
+                albumName="Someday My Prince Will Come",
+                artist="Bill Evans",
+                genre="JAZZ",
+                condition="NM",
+                price=82000,
+                tradeMethod="BOTH",
+                barcode="0075993751425",
+                description="Bill Evans의 낭만적 재즈. 거의 새것 같습니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=37
+            ),
+            ProductModel(
+                albumName="Stardust",
+                artist="Chet Baker",
+                genre="JAZZ",
+                condition="VG+",
+                price=70000,
+                tradeMethod="DELIVERY",
+                barcode="0075993851425",
+                description="Chet Baker의 스타더스트. 양호한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=30
+            ),
+            ProductModel(
+                albumName="Plays Cole Porter",
+                artist="John Coltrane",
+                genre="JAZZ",
+                condition="NM",
+                price=86000,
+                tradeMethod="BOTH",
+                barcode="0075993951425",
+                description="콜트레인이 연주한 콜 포터 명곡. 완벽한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=39
+            ),
+            ProductModel(
+                albumName="Impressions",
+                artist="John Coltrane",
+                genre="JAZZ",
+                condition="VG+",
+                price=76000,
+                tradeMethod="DELIVERY",
+                barcode="0075994051425",
+                description="콜트레인의 인상곡 모음. 양호한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=42
+            ),
+            ProductModel(
+                albumName="Naima",
+                artist="John Coltrane",
+                genre="JAZZ",
+                condition="NM",
+                price=84000,
+                tradeMethod="BOTH",
+                barcode="0075994151425",
+                description="콜트레인의 나이마. 거의 새것 같습니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=40
+            ),
+            ProductModel(
+                albumName="In a Sentimental Mood",
+                artist="Duke Ellington",
+                genre="JAZZ",
+                condition="VG+",
+                price=73000,
+                tradeMethod="DELIVERY",
+                barcode="0075994251425",
+                description="Duke Ellington의 감상적 기분. 양호한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=33
+            ),
+            ProductModel(
+                albumName="Autumn Leaves",
+                artist="Bill Evans",
+                genre="JAZZ",
+                condition="NM",
+                price=81000,
+                tradeMethod="BOTH",
+                barcode="0075994351425",
+                description="Bill Evans의 가을 낙엽. 완벽한 상태입니다.",
+                albumImage="",
+                sellerId=1,
+                likeCount=36
             )
         ]
         db.add_all(sample_products)
@@ -360,7 +633,7 @@ def init_default_data():
         db.add_all(sample_notifications)
         db.commit()
 
-        print("✅ 샘플 데이터 생성 완료 (10개 앨범)")
+        print("✅ 샘플 데이터 생성 완료 (33개 앨범 - JAZZ 17개 포함)")
     finally:
         db.close()
 
@@ -414,7 +687,16 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
                 errors.append(ErrorDetail(code="INVALID_FORMAT", field="password", message="비밀번호는 대문자와 소문자를 각 1자 이상 포함해야 합니다."))
 
     if errors:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [e.dict() for e in errors]})
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "success": False,
+                "message": "유효성 검사 실패",
+                "data": None,
+                "errors": [e.dict() for e in errors],
+                "pagination": None
+            }
+        )
 
     user = db.query(UserModel).filter(UserModel.email == request.email).first()
     if not user or not verify_password(request.password, user.password):
@@ -445,7 +727,16 @@ async def login_v2(request: LoginRequest, db: Session = Depends(get_db)):
                 errors.append(ErrorDetail(code="INVALID_FORMAT", field="password", message="비밀번호는 대문자와 소문자를 각 1자 이상 포함해야 합니다."))
 
     if errors:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [e.dict() for e in errors]})
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "success": False,
+                "message": "유효성 검사 실패",
+                "data": None,
+                "errors": [e.dict() for e in errors],
+                "pagination": None
+            }
+        )
 
     user = db.query(UserModel).filter(UserModel.email == request.email).first()
     if not user or not verify_password(request.password, user.password):
@@ -483,7 +774,16 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
         errors.append(ErrorDetail(code="INVALID_FORMAT", field="phone", message="휴대폰 번호는 010-XXXX-XXXX 형식으로 입력해주세요."))
 
     if errors:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [e.dict() for e in errors]})
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "success": False,
+                "message": "유효성 검사 실패",
+                "data": None,
+                "errors": [e.dict() for e in errors],
+                "pagination": None
+            }
+        )
 
     existing_user = db.query(UserModel).filter(UserModel.email == request.email).first()
     if existing_user:
@@ -610,7 +910,16 @@ async def create_product(
         errors.append(ErrorDetail(code="REQUIRED", field="albumImage", message="상품 이미지를 등록해주세요."))
 
     if errors:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [e.dict() for e in errors]})
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "success": False,
+                "message": "유효성 검사 실패",
+                "data": None,
+                "errors": [e.dict() for e in errors],
+                "pagination": None
+            }
+        )
 
     new_product = ProductModel(albumName=request.albumName, artist=request.artist, genre=request.genre, condition=request.condition, price=request.price, tradeMethod=request.tradeMethod, barcode=request.barcode, description=request.description, albumImage=request.albumImage, sellerId=user_id)
     db.add(new_product)

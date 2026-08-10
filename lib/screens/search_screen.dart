@@ -86,8 +86,8 @@ class _SearchScreenState extends State<SearchScreen> {
         if (scr.hasClients && scr.position.hasPixels) {
           if (scr.offset >= scr.position.maxScrollExtent) {
             if (page == null) return;
-            page!['page'] = min(page!['page'] + 1, page!['totalPages']);
-            if (page!['page'] == page!['totalPages']) return;
+            if (page!['page'] >= page!['totalPages']) return;
+            page!['page'] = page!['page'] + 1;
             refresh(true);
           }
         }
@@ -192,7 +192,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             (e) => PopupMenuItem(
                               value: e,
                               child: Text(
-                                e.l,
+                                '${e.l}',
                                 style: TextStyle(color: Colors.white60),
                               ),
                             ),
@@ -267,6 +267,12 @@ class _SearchScreenState extends State<SearchScreen> {
                                             child: Image.network(
                                               e.albumImage,
                                               fit: .cover,
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => SizedBox(),
                                             ),
                                           ),
 

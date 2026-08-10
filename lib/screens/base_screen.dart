@@ -49,7 +49,7 @@ class _BaseScreenState extends State<BaseScreen> {
                   icon: Icon(Icons.home_outlined),
                   label: '홈',
                 ),
-                BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
+                BottomNavigationBarItem(icon: Icon(Icons.search), label: '탐색'),
 
                 BottomNavigationBarItem(
                   icon: CircleAvatar(

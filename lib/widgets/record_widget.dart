@@ -32,7 +32,8 @@ class _RecordWidgetState extends State<RecordWidget>
       appCtrl.loadAlbums(sort: Sort.popular, limit: 5).then((value) {
         if (value == null) return;
         albums = (value['data'] as List<AlbumModel>).take(5).toList();
-        setState(() {});
+
+        if (mounted) setState(() {});
       });
     });
     super.initState();

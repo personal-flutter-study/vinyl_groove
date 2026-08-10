@@ -159,7 +159,7 @@ enum Condition {
   M('M', "M"),
   NM('NM', "NM"),
   VG('VG', "VG"),
-  VG_P('VG+', "VG_P"),
+  VG_P('VG+', "VG+"),
   G('G', "G");
 
   final String v;

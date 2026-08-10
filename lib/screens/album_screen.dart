@@ -56,10 +56,12 @@ class _AlbumScreenState extends State<AlbumScreen> {
                     ),
                     actions: [LikeButton(albumModel: widget.albumModel)],
                     expandedHeight: 300,
-                    flexibleSpace: Image.network(
-                      album.albumImage,
-                      fit: .cover,
-                      height: 400,
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Image.network(
+                        album.albumImage,
+                        fit: .cover,
+                        height: 400,
+                      ),
                     ),
                   ),
 

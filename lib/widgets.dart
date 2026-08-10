@@ -34,7 +34,7 @@ class _AlertWidgetState extends State<AlertWidget> {
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       alerts = await appCtrl.loadAlerts();
-      setState(() {});
+      if (mounted) setState(() {});
     });
 
     super.initState();

@@ -47,7 +47,9 @@ class _SearchScreenState extends State<SearchScreen> {
   refresh([bool load = false]) => appCtrl
       .loadAlbums(
         size: 12,
-        page: page?['page'],
+        // load(무한스크롤 다음 페이지)일 때만 현재 페이지를 이어서 쓰고,
+        // 검색어/필터/정렬 변경 등 새 검색일 때는 항상 1페이지부터 다시 조회한다.
+        page: load ? page?['page'] : null,
         sort: sort.v,
         conditions: conditions.map((e) => e.v).toList(),
         genres: genres.map((e) => e.v).toList(),

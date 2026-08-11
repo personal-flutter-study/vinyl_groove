@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vinyl_groove_poc_1/app_ctrl.dart';
 import 'package:vinyl_groove_poc_1/main.dart' as app;
 import 'package:vinyl_groove_poc_1/widgets/like_button.dart';
 
@@ -13,7 +12,7 @@ void main() {
     await tester.pumpAndSettle();
     await act();
     await tester.pumpAndSettle();
-    await Future.delayed(Duration(milliseconds: 1200));
+    await Future.delayed(Duration(seconds: 5));
   }
 
   testWidgets('test1', (tester) async {

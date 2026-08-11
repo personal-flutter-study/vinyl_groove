@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vinyl_groove_poc_1/models/album_model.dart';
@@ -21,7 +19,9 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final sr = TextEditingController();
 
-  Map? page;
+  int page = 1;
+  bool hasNext = true;
+  int total = 0;
   List<AlbumModel> albums = [];
 
   selGenre(Genre genre) {
@@ -44,32 +44,35 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  refresh([bool load = false]) => appCtrl
-      .loadAlbums(
-        size: 12,
-        // load(무한스크롤 다음 페이지)일 때만 현재 페이지를 이어서 쓰고,
-        // 검색어/필터/정렬 변경 등 새 검색일 때는 항상 1페이지부터 다시 조회한다.
-        page: load ? page?['page'] : null,
-        sort: sort.v,
-        conditions: conditions.map((e) => e.v).toList(),
-        genres: genres.map((e) => e.v).toList(),
-        tradeMethod: trade.v,
-        keyword: sr.text,
-        minPrice: prices.start.toInt(),
-        maxPrice: prices.end.toInt(),
-      )
-      .then((value) {
-        if (value != null) {
-          page = value['pagination'];
-          if (load) {
-            albums.addAll(value['data']);
-          } else {
-            albums = value['data'];
+  refresh([bool load = false]) {
+    return appCtrl
+        .loadAlbums(
+          size: 12,
+          page: page,
+          sort: sort.v,
+          conditions: conditions.map((e) => e.v).toList(),
+          genres: genres.map((e) => e.v).toList(),
+          tradeMethod: trade.v,
+          keyword: sr.text,
+          minPrice: prices.start.toInt(),
+          maxPrice: prices.end.toInt(),
+        )
+        .then((value) {
+          if (value != null) {
+            page = value['pagination']['page'];
+            total = value['pagination']['totalCount'];
+            hasNext = value['pagination']['hasNext'];
+
+            if (load) {
+              albums.addAll(value['data']);
+            } else {
+              albums = value['data'];
+            }
+            setState(() {});
           }
-          setState(() {});
-        }
-        return value;
-      });
+          return value;
+        });
+  }
 
   List<Genre> genres = [];
   List<Condition> conditions = [];
@@ -87,10 +90,10 @@ class _SearchScreenState extends State<SearchScreen> {
       ..addListener(() {
         if (scr.hasClients && scr.position.hasPixels) {
           if (scr.offset >= scr.position.maxScrollExtent) {
-            if (page == null) return;
-            if (page!['page'] >= page!['totalPages']) return;
-            page!['page'] = page!['page'] + 1;
-            refresh(true);
+            if (hasNext) {
+              page++;
+              refresh(true);
+            }
           }
         }
       });
@@ -172,7 +175,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   mainAxisAlignment: .spaceBetween,
                   children: [
                     Text(
-                      '검색 결과 ${page?['totalCount'] ?? 0}개',
+                      '검색 결과 ${total}개',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: .bold,

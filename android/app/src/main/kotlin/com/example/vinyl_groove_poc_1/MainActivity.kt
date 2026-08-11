@@ -70,8 +70,6 @@ class MainActivity : FlutterActivity() {
                                 false
                             ).let { src ->
                                 BinaryBitmap(HybridBinarizer(src)).let { img ->
-
-
                                     MultiFormatReader().decode(img).let { res ->
                                         result.success(res.text)
                                     }

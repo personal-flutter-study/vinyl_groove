@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:image_picker/image_picker.dart';
@@ -35,6 +34,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final file = File(image?.path ?? '');
     if (file.existsSync()) {
       provider = FileImage(file);
+    } else {
+      provider = AssetImage(file.path);
     }
 
     return SafeArea(

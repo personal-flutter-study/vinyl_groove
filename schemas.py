@@ -23,6 +23,7 @@ class BaseResponse(BaseModel):
     data: Optional[Any] = None
     errors: Optional[List[ErrorDetail]] = None
     pagination: Optional[PaginationInfo] = None
+    totalCount: Optional[int] = None
 
 class User(BaseModel):
     id: int

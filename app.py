@@ -774,16 +774,7 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
         errors.append(ErrorDetail(code="INVALID_FORMAT", field="phone", message="휴대폰 번호는 010-XXXX-XXXX 형식으로 입력해주세요."))
 
     if errors:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "success": False,
-                "message": "유효성 검사 실패",
-                "data": None,
-                "errors": [e.dict() for e in errors],
-                "pagination": None
-            }
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [e.dict() for e in errors]})
 
     existing_user = db.query(UserModel).filter(UserModel.email == request.email).first()
     if existing_user:
@@ -802,6 +793,7 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
 async def list_products(
     http_request: Request,
     sort: str = Query("recent"),
+    limit: Optional[int] = Query(None, ge=1),
     keyword: Optional[str] = Query(None),
     genres: Optional[str] = Query(None),
     conditions: Optional[str] = Query(None),
@@ -842,6 +834,13 @@ async def list_products(
         query = query.order_by(ProductModel.createdAt.desc())
 
     total_count = query.count()
+
+    # limit 파라미터 사용, 또는 바코드 검색 시: 페이지네이션 없이 {success, data, totalCount} 형태로 반환
+    # (스펙: "limit 사용 (페이지네이션 없음)", 바코드 검색 200 OK 응답 모두 pagination 없음)
+    if limit is not None or barcode:
+        products = query.limit(limit).all() if limit is not None else query.all()
+        return BaseResponse(success=True, data=[{"id": p.id, "albumName": p.albumName, "artist": p.artist, "genre": p.genre, "condition": p.condition, "price": p.price, "tradeMethod": p.tradeMethod, "albumImage": resolve_image_url(http_request, p.albumImage), "likeCount": p.likeCount, "createdAt": p.createdAt.isoformat() + "Z"} for p in products], totalCount=total_count)
+
     offset = (page - 1) * size
     products = query.offset(offset).limit(size).all()
 

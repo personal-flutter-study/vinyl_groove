@@ -63,7 +63,9 @@ python -m uvicorn app:app --host 0.0.0.0 --port 3000 --reload
 
 서버가 시작되면 `http://localhost:8000/docs` 에서 Swagger UI를 볼 수 있습니다. (포트 변경 시 해당 포트 번호로 접속)
 
-서버를 처음 시작하면 10개의 샘플 앨범과 아래 테스트 계정이 자동으로 생성됩니다. (DB에 이미 사용자가 있으면 스킵되므로, 다시 생성하려면 `vinyl_groove.db`를 지우고 재시작)
+서버를 처음 시작하면 44개의 샘플 앨범과 아래 테스트 계정이 자동으로 생성됩니다. (DB에 이미 사용자가 있으면 스킵되므로, 다시 생성하려면 `vinyl_groove.db`를 지우고 재시작)
+
+바코드 스캔 테스트용 앨범 2개(`0011105016919`, `5099990656019`)는 위 초기 생성 여부와 무관하게, 서버가 시작될 때마다 없으면 자동으로 채워 넣어집니다.
 
 ## 🔑 테스트 계정
 
@@ -92,6 +94,7 @@ python -m uvicorn app:app --host 0.0.0.0 --port 3000 --reload
 
 ### 알림 (notifications)
 - `GET /notifications` - 알림 조회
+- `POST /notifications/trigger` - 알림 생성 (테스트용, 가격 변동 알림을 즉시 발생시킴)
 - `PUT /notifications/read` - 알림 읽음 처리
 - `DELETE /notifications` - 알림 삭제
 
@@ -158,6 +161,21 @@ curl -X POST http://localhost:8000/products \
   -G -d "userId=1"
 ```
 
+### 알림 생성 (테스트용)
+특정 상품/방향을 지정하지 않으면 무작위 상품의 가격을 무작위로 인상/인하시키고, 전체 유저에게 알림을 생성합니다.
+```bash
+curl -X POST http://localhost:8000/notifications/trigger \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer {token}" \
+  -d '{
+    "productId": 1,
+    "direction": "down",
+    "count": 5
+  }'
+```
+`productId`, `direction`, `count` 모두 생략 가능합니다 (`{}`만 보내도 동작, `count` 기본값 1, 최대 50).
+`count`를 지정하면 한 번의 호출로 여러 건을 연속 생성합니다. `productId`를 같이 지정하면 그 상품 가격이 매번 누적으로 변동되고, 생략하면 매번 무작위 상품이 선택됩니다.
+
 ## 🎯 사용 가능한 값
 
 ### 장르 (genre)
@@ -185,6 +203,7 @@ curl -X POST http://localhost:8000/products \
 - [x] 상품 삭제
 - [x] 이미지 업로드
 - [x] 알림 조회
+- [x] 알림 생성 (테스트용)
 - [x] 알림 읽음 처리
 - [x] 알림 삭제
 - [x] 바코드 검색

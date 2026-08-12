@@ -110,6 +110,11 @@ class ImageUploadRequest(BaseModel):
     image: str
     type: Optional[str] = "ALBUM"
 
+class NotificationTriggerRequest(BaseModel):
+    productId: Optional[int] = None
+    direction: Optional[str] = None
+    count: Optional[int] = 1
+
 # ==================== 라이프사이클 ====================
 
 def simulate_price_changes():
@@ -171,6 +176,53 @@ def simulate_price_changes():
     # 백그라운드 스레드에서 실행
     thread = threading.Thread(target=price_change_worker, daemon=True)
     thread.start()
+
+# 바코드 스캔 테스트용 앨범. DB를 새로 만들거나 이미 존재하더라도
+# 해당 바코드로 스캔했을 때 항상 조회되도록 startup마다 존재 여부를 보장한다.
+BARCODE_SCAN_PRODUCTS = [
+    {
+        "albumName": "The Chronic",
+        "artist": "Dr. Dre",
+        "genre": "HIPHOP",
+        "condition": "NM",
+        "price": 89000,
+        "tradeMethod": "BOTH",
+        "barcode": "0011105016919",
+        "description": "바코드 스캔 테스트용 앨범. 거의 새것 같은 상태입니다.",
+        "albumImage": "/images/album/sample_vinyl.jpg",
+        "likeCount": 24
+    },
+    {
+        "albumName": "Voodoo",
+        "artist": "D'Angelo",
+        "genre": "RNB_SOUL",
+        "condition": "VG+",
+        "price": 76000,
+        "tradeMethod": "DIRECT",
+        "barcode": "5099990656019",
+        "description": "바코드 스캔 테스트용 앨범. 양호한 상태입니다.",
+        "albumImage": "/images/album/rumours.jpg",
+        "likeCount": 19
+    }
+]
+
+def ensure_barcode_scan_products():
+    """BARCODE_SCAN_PRODUCTS가 항상 DB에 존재하도록 보장 (이미 있으면 건너뜀)"""
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        seller = db.query(UserModel).first()
+        seller_id = seller.id if seller else 1
+        added = False
+        for data in BARCODE_SCAN_PRODUCTS:
+            if not db.query(ProductModel).filter(ProductModel.barcode == data["barcode"]).first():
+                db.add(ProductModel(sellerId=seller_id, **data))
+                added = True
+        if added:
+            db.commit()
+            print("✅ 바코드 스캔 테스트용 앨범 등록 완료")
+    finally:
+        db.close()
 
 def init_default_data():
     """기본 샘플 데이터 초기화"""
@@ -607,6 +659,175 @@ def init_default_data():
                 albumImage="/images/album/discovery.jpg",
                 sellerId=1,
                 likeCount=36
+            ),
+            ProductModel(
+                albumName="Songs in the Key of Life",
+                artist="Stevie Wonder",
+                genre="RNB_SOUL",
+                condition="M",
+                price=99000,
+                tradeMethod="BOTH",
+                barcode="0076000100425",
+                description="스티비 원더의 걸작 더블 앨범. 완벽한 상태입니다.",
+                albumImage="/images/album/kind_of_blue.jpg",
+                sellerId=1,
+                likeCount=58
+            ),
+            ProductModel(
+                albumName="What's Going On",
+                artist="Marvin Gaye",
+                genre="RNB_SOUL",
+                condition="NM",
+                price=88000,
+                tradeMethod="DELIVERY",
+                barcode="0076000200425",
+                description="마빈 게이의 사회적 메시지가 담긴 명반. 거의 새것 같습니다.",
+                albumImage="/images/album/thriller.jpg",
+                sellerId=1,
+                likeCount=49
+            ),
+            ProductModel(
+                albumName="Blonde",
+                artist="Frank Ocean",
+                genre="RNB_SOUL",
+                condition="M",
+                price=95000,
+                tradeMethod="DIRECT",
+                barcode="0076000300425",
+                description="프랭크 오션의 명반. 완벽한 상태입니다.",
+                albumImage="/images/album/purple_rain.jpg",
+                sellerId=1,
+                likeCount=72
+            ),
+            ProductModel(
+                albumName="Ambient 1: Music for Airports",
+                artist="Brian Eno",
+                genre="ETC",
+                condition="VG+",
+                price=60000,
+                tradeMethod="DELIVERY",
+                barcode="0076000400425",
+                description="브라이언 이노의 앰비언트 명작. 양호한 상태입니다.",
+                albumImage="/images/album/abbey_road.jpg",
+                sellerId=1,
+                likeCount=21
+            ),
+            ProductModel(
+                albumName="Selected Ambient Works 85-92",
+                artist="Aphex Twin",
+                genre="ETC",
+                condition="NM",
+                price=72000,
+                tradeMethod="BOTH",
+                barcode="0076000500425",
+                description="에이펙스 트윈의 앰비언트 걸작. 거의 새것 같습니다.",
+                albumImage="/images/album/born_to_run.jpg",
+                sellerId=1,
+                likeCount=28
+            ),
+            ProductModel(
+                albumName="The Low End Theory",
+                artist="A Tribe Called Quest",
+                genre="HIPHOP",
+                condition="VG",
+                price=62000,
+                tradeMethod="DIRECT",
+                barcode="0076000600425",
+                description="90년대 힙합의 고전. 사용감이 있으나 재생 양호합니다.",
+                albumImage="/images/album/discovery.jpg",
+                sellerId=1,
+                likeCount=33
+            ),
+            ProductModel(
+                albumName="Enter the Wu-Tang (36 Chambers)",
+                artist="Wu-Tang Clan",
+                genre="HIPHOP",
+                condition="EX",
+                price=70000,
+                tradeMethod="BOTH",
+                barcode="0076000700425",
+                description="우탱 클랜의 데뷔 명반. 약간의 사용감이 있습니다.",
+                albumImage="/images/album/sample_vinyl.jpg",
+                sellerId=1,
+                likeCount=40
+            ),
+            ProductModel(
+                albumName="Homework",
+                artist="Daft Punk",
+                genre="ELECTRONIC",
+                condition="NM",
+                price=80000,
+                tradeMethod="DELIVERY",
+                barcode="0076000800425",
+                description="다프트 펑크의 데뷔 앨범. 거의 새것 같습니다.",
+                albumImage="/images/album/rumours.jpg",
+                sellerId=1,
+                likeCount=55
+            ),
+            ProductModel(
+                albumName="Music Has the Right to Children",
+                artist="Boards of Canada",
+                genre="ELECTRONIC",
+                condition="VG+",
+                price=74000,
+                tradeMethod="BOTH",
+                barcode="0076000900425",
+                description="보드 오브 캐나다의 명작. 양호한 상태입니다.",
+                albumImage="/images/album/kind_of_blue.jpg",
+                sellerId=1,
+                likeCount=31
+            ),
+            ProductModel(
+                albumName="1989",
+                artist="Taylor Swift",
+                genre="POP",
+                condition="M",
+                price=66000,
+                tradeMethod="DIRECT",
+                barcode="0076001000425",
+                description="테일러 스위프트의 팝 명반. 완벽한 상태입니다.",
+                albumImage="/images/album/thriller.jpg",
+                sellerId=1,
+                likeCount=63
+            ),
+            ProductModel(
+                albumName="Back to Black",
+                artist="Amy Winehouse",
+                genre="POP",
+                condition="NM",
+                price=71000,
+                tradeMethod="BOTH",
+                barcode="0076001100425",
+                description="에이미 와인하우스의 걸작. 거의 새것 같습니다.",
+                albumImage="/images/album/purple_rain.jpg",
+                sellerId=1,
+                likeCount=47
+            ),
+            ProductModel(
+                albumName="The Four Seasons",
+                artist="Antonio Vivaldi",
+                genre="CLASSICAL",
+                condition="VG+",
+                price=54000,
+                tradeMethod="DELIVERY",
+                barcode="0076001200425",
+                description="비발디의 사계. 양호한 상태입니다.",
+                albumImage="/images/album/abbey_road.jpg",
+                sellerId=1,
+                likeCount=22
+            ),
+            ProductModel(
+                albumName="Symphony No. 9",
+                artist="Ludwig van Beethoven",
+                genre="CLASSICAL",
+                condition="NM",
+                price=62000,
+                tradeMethod="BOTH",
+                barcode="0076001300425",
+                description="베토벤의 교향곡 9번. 거의 새것 같습니다.",
+                albumImage="/images/album/born_to_run.jpg",
+                sellerId=1,
+                likeCount=27
             )
         ]
         db.add_all(sample_products)
@@ -634,7 +855,7 @@ def init_default_data():
         db.add_all(sample_notifications)
         db.commit()
 
-        print("✅ 샘플 데이터 생성 완료 (33개 앨범 - JAZZ 17개 포함)")
+        print(f"✅ 샘플 데이터 생성 완료 ({len(sample_products)}개 앨범)")
     finally:
         db.close()
 
@@ -646,6 +867,7 @@ async def startup():
     create_tables()
     print("✅ 데이터베이스 준비 완료")
     init_default_data()
+    ensure_barcode_scan_products()
     simulate_price_changes()
     print("📊 알림 시뮬레이션 시작 (30초 주기)")
 
@@ -1013,6 +1235,90 @@ async def get_notifications(
             notification_list.append({"id": notif.id, "type": notif.type, "title": "가격 인하" if notif.type == "PRICE_DOWN" else "가격 인상", "productId": notif.productId, "albumName": product.albumName, "artist": product.artist, "albumImage": resolve_image_url(http_request, product.albumImage), "previousPrice": notif.previousPrice, "currentPrice": notif.currentPrice, "isRead": notif.isRead, "createdAt": notif.createdAt.isoformat() + "Z"})
 
     return BaseResponse(success=True, data={"unreadCount": unread_count, "notifications": notification_list})
+
+@app.post("/notifications/trigger", response_model=BaseResponse, status_code=status.HTTP_201_CREATED, tags=["notifications"])
+async def trigger_notification(
+    request: NotificationTriggerRequest,
+    http_request: Request,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """알림 생성 (테스트용) - 가격 변동 알림을 즉시 생성한다.
+
+    productId를 지정하면 해당 상품, 생략하면 무작위 상품이 대상이 된다.
+    direction을 "up"/"down"으로 지정하면 인상/인하가 강제되고, 생략하면 무작위로 결정된다.
+    count를 지정하면 그 횟수만큼 반복해서 한 번에 여러 알림을 생성한다 (기본 1, 최대 50).
+    """
+    import random
+
+    MAX_TRIGGER_COUNT = 50
+
+    # 전체 유저에게 알림을 뿌리는 endpoint이므로, 존재하지 않는 userId로
+    # 쿼리 인증을 통과하는 것을 막기 위해 실제 가입된 유저인지 확인한다.
+    caller = db.query(UserModel).filter(UserModel.id == current_user["user_id"]).first()
+    if not caller:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"success": False, "message": "인증 실패", "errors": [{"code": "USER_NOT_FOUND", "message": "존재하지 않는 사용자입니다."}]})
+
+    if request.direction is not None and request.direction not in ("up", "down"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_FORMAT", "field": "direction", "message": "direction은 up 또는 down이어야 합니다."}]})
+
+    count = request.count if request.count is not None else 1
+    if count < 1 or count > MAX_TRIGGER_COUNT:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"success": False, "message": "유효성 검사 실패", "errors": [{"code": "INVALID_RANGE", "field": "count", "message": f"count는 1 이상 {MAX_TRIGGER_COUNT} 이하여야 합니다."}]})
+
+    if request.productId is not None:
+        product = db.query(ProductModel).filter(ProductModel.id == request.productId).first()
+        if not product:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"success": False, "message": "상품을 찾을 수 없습니다.", "errors": [{"code": "PRODUCT_NOT_FOUND", "message": "존재하지 않는 상품입니다."}]})
+        candidate_products = [product]
+    else:
+        candidate_products = db.query(ProductModel).all()
+        if not candidate_products:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"success": False, "message": "상품을 찾을 수 없습니다.", "errors": [{"code": "PRODUCT_NOT_FOUND", "message": "등록된 상품이 없습니다."}]})
+
+    users = db.query(UserModel).all()
+    results = []
+    for _ in range(count):
+        target = random.choice(candidate_products)
+        direction = request.direction or random.choice(["up", "down"])
+        change_percent = random.randint(5, 15)
+        old_price = target.price
+        if direction == "up":
+            new_price = int(old_price * (1 + change_percent / 100))
+            notification_type = "PRICE_UP"
+        else:
+            new_price = int(old_price * (1 - change_percent / 100))
+            notification_type = "PRICE_DOWN"
+
+        target.price = new_price
+
+        for user in users:
+            db.add(NotificationModel(
+                userId=user.id,
+                type=notification_type,
+                productId=target.id,
+                previousPrice=old_price,
+                currentPrice=new_price,
+                isRead=False
+            ))
+
+        results.append({
+            "productId": target.id,
+            "albumName": target.albumName,
+            "artist": target.artist,
+            "albumImage": resolve_image_url(http_request, target.albumImage),
+            "type": notification_type,
+            "previousPrice": old_price,
+            "currentPrice": new_price
+        })
+
+    db.commit()
+
+    return BaseResponse(success=True, message=f"알림 {count}건이 생성되었습니다.", data={
+        "triggeredCount": count,
+        "notifiedUserCount": len(users),
+        "results": results
+    })
 
 @app.put("/notifications/read", response_model=BaseResponse, tags=["notifications"])
 async def mark_notification_read(

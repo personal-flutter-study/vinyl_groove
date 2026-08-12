@@ -94,15 +94,17 @@ class SignupRequest(BaseModel):
     phone: str
 
 class ProductCreateRequest(BaseModel):
-    albumName: str
-    artist: str
-    genre: str
-    condition: str
-    price: int
-    tradeMethod: str
+    # null이 와도 pydantic 단계에서 막지 않고 그대로 통과시켜서,
+    # create_product의 REQUIRED/INVALID_RANGE 검증 로직이 필드별 안내 메시지를 만들도록 한다.
+    albumName: Optional[str] = None
+    artist: Optional[str] = None
+    genre: Optional[str] = None
+    condition: Optional[str] = None
+    price: Optional[int] = None
+    tradeMethod: Optional[str] = None
     barcode: Optional[str] = None
     description: Optional[str] = None
-    albumImage: str
+    albumImage: Optional[str] = None
 
 class ImageUploadRequest(BaseModel):
     image: str
@@ -131,37 +133,36 @@ def simulate_price_changes():
 
                 product = random.choice(products)
 
-                # 30% 확률로 가격 변동
-                if random.random() < 0.3:
-                    old_price = product.price
-                    change_percent = random.randint(5, 15)
+                # 30초마다 항상 가격 변동
+                old_price = product.price
+                change_percent = random.randint(5, 15)
 
-                    # 50% 확률로 인상, 50% 확률로 인하
-                    if random.random() < 0.5:
-                        new_price = int(old_price * (1 + change_percent / 100))
-                        notification_type = "PRICE_UP"
-                    else:
-                        new_price = int(old_price * (1 - change_percent / 100))
-                        notification_type = "PRICE_DOWN"
+                # 50% 확률로 인상, 50% 확률로 인하
+                if random.random() < 0.5:
+                    new_price = int(old_price * (1 + change_percent / 100))
+                    notification_type = "PRICE_UP"
+                else:
+                    new_price = int(old_price * (1 - change_percent / 100))
+                    notification_type = "PRICE_DOWN"
 
-                    product.price = new_price
-                    db.commit()
+                product.price = new_price
+                db.commit()
 
-                    # 모든 사용자에게 알림 생성 (테스트용)
-                    users = db.query(UserModel).all()
-                    for user in users:
-                        notification = NotificationModel(
-                            userId=user.id,
-                            type=notification_type,
-                            productId=product.id,
-                            previousPrice=old_price,
-                            currentPrice=new_price,
-                            isRead=False
-                        )
-                        db.add(notification)
+                # 모든 사용자에게 알림 생성 (테스트용)
+                users = db.query(UserModel).all()
+                for user in users:
+                    notification = NotificationModel(
+                        userId=user.id,
+                        type=notification_type,
+                        productId=product.id,
+                        previousPrice=old_price,
+                        currentPrice=new_price,
+                        isRead=False
+                    )
+                    db.add(notification)
 
-                    db.commit()
-                    print(f"💰 알림 생성: {product.albumName} ({old_price} → {new_price})")
+                db.commit()
+                print(f"💰 알림 생성: {product.albumName} ({old_price} → {new_price})")
 
                 db.close()
             except Exception as e:
@@ -213,7 +214,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992605138",
                 description="Fleetwood Mac의 명작 앨범. 거의 새것 같은 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/rumours.jpg",
                 sellerId=1,
                 likeCount=45
             ),
@@ -226,7 +227,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0016861829425",
                 description="재즈의 명반. 약간의 사용감이 있지만 재생에는 문제없습니다.",
-                albumImage="",
+                albumImage="/images/album/kind_of_blue.jpg",
                 sellerId=1,
                 likeCount=32
             ),
@@ -239,7 +240,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0082408029621",
                 description="전설적인 팝앨범. 개봉했지만 완벽한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/thriller.jpg",
                 sellerId=1,
                 likeCount=78
             ),
@@ -252,7 +253,7 @@ def init_default_data():
                 tradeMethod="DIRECT",
                 barcode="0077923614627",
                 description="Prince의 걸작. 약간의 스크래치가 있습니다.",
-                albumImage="",
+                albumImage="/images/album/purple_rain.jpg",
                 sellerId=1,
                 likeCount=56
             ),
@@ -265,7 +266,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0077776184025",
                 description="비틀즈의 마지막 앨범. 매우 좋은 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/abbey_road.jpg",
                 sellerId=1,
                 likeCount=102
             ),
@@ -278,7 +279,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0054429161320",
                 description="프로그레시브 록의 명작. 거의 새것입니다.",
-                albumImage="",
+                albumImage="/images/album/born_to_run.jpg",
                 sellerId=1,
                 likeCount=88
             ),
@@ -291,7 +292,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075992631125",
                 description="스프링스틴의 대표작. 양호한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/discovery.jpg",
                 sellerId=1,
                 likeCount=41
             ),
@@ -304,7 +305,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992841421",
                 description="클래식 음악의 보석. 완벽한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/sample_vinyl.jpg",
                 sellerId=1,
                 likeCount=34
             ),
@@ -317,7 +318,7 @@ def init_default_data():
                 tradeMethod="DIRECT",
                 barcode="0075992234521",
                 description="90년대 힙합의 명작. 약간의 사용감이 있습니다.",
-                albumImage="",
+                albumImage="/images/album/rumours.jpg",
                 sellerId=1,
                 likeCount=29
             ),
@@ -330,7 +331,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992145621",
                 description="일렉트로닉 뮤직의 걸작. 거의 새것 같습니다.",
-                albumImage="",
+                albumImage="/images/album/kind_of_blue.jpg",
                 sellerId=1,
                 likeCount=67
             ),
@@ -343,7 +344,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992341425",
                 description="LED ZEPPELIN의 명곡 모음. 양호한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/thriller.jpg",
                 sellerId=1,
                 likeCount=51
             ),
@@ -356,7 +357,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075992451425",
                 description="존 콜트레인의 걸작. 거의 새것 같습니다.",
-                albumImage="",
+                albumImage="/images/album/purple_rain.jpg",
                 sellerId=1,
                 likeCount=43
             ),
@@ -369,7 +370,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992551425",
                 description="Nirvana의 1집. 약간의 사용감이 있습니다.",
-                albumImage="",
+                albumImage="/images/album/abbey_road.jpg",
                 sellerId=1,
                 likeCount=89
             ),
@@ -382,7 +383,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075992651425",
                 description="Pink Floyd의 더블 앨범. 완벽한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/born_to_run.jpg",
                 sellerId=1,
                 likeCount=76
             ),
@@ -395,7 +396,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992751425",
                 description="팝의 왕 마이클 잭슨의 대표작 재출시. 양호 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/discovery.jpg",
                 sellerId=1,
                 likeCount=65
             ),
@@ -408,7 +409,7 @@ def init_default_data():
                 tradeMethod="DIRECT",
                 barcode="0075992851425",
                 description="부드러운 재즈 음악. 약간의 사용감이 있으나 재생 양호합니다.",
-                albumImage="",
+                albumImage="/images/album/sample_vinyl.jpg",
                 sellerId=1,
                 likeCount=27
             ),
@@ -421,7 +422,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075992951425",
                 description="Miles Davis의 스페인 풍 재즈. 완벽한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/rumours.jpg",
                 sellerId=1,
                 likeCount=38
             ),
@@ -434,7 +435,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075993051425",
                 description="Art Blakey의 재즈 명곡. 양호한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/kind_of_blue.jpg",
                 sellerId=1,
                 likeCount=31
             ),
@@ -447,7 +448,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075993151425",
                 description="콜트레인의 블루 트레인. 양호한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/thriller.jpg",
                 sellerId=1,
                 likeCount=44
             ),
@@ -460,7 +461,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075993251425",
                 description="Bill Evans의 미드나이트. 거의 새것 같습니다.",
-                albumImage="",
+                albumImage="/images/album/purple_rain.jpg",
                 sellerId=1,
                 likeCount=35
             ),
@@ -473,7 +474,7 @@ def init_default_data():
                 tradeMethod="DIRECT",
                 barcode="0075993351425",
                 description="Chet Baker의 낭만적인 재즈. 양호한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/abbey_road.jpg",
                 sellerId=1,
                 likeCount=29
             ),
@@ -486,7 +487,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075993451425",
                 description="Thelonious Monk의 4중주 앨범. 완벽한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/born_to_run.jpg",
                 sellerId=1,
                 likeCount=41
             ),
@@ -499,7 +500,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075993551425",
                 description="콜트레인의 거대한 발걸음. 좋은 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/discovery.jpg",
                 sellerId=1,
                 likeCount=52
             ),
@@ -512,7 +513,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075993651425",
                 description="Bill Evans의 발라드 모음. 약간의 사용감이 있습니다.",
-                albumImage="",
+                albumImage="/images/album/sample_vinyl.jpg",
                 sellerId=1,
                 likeCount=26
             ),
@@ -525,7 +526,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075993751425",
                 description="Bill Evans의 낭만적 재즈. 거의 새것 같습니다.",
-                albumImage="",
+                albumImage="/images/album/rumours.jpg",
                 sellerId=1,
                 likeCount=37
             ),
@@ -538,7 +539,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075993851425",
                 description="Chet Baker의 스타더스트. 양호한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/kind_of_blue.jpg",
                 sellerId=1,
                 likeCount=30
             ),
@@ -551,7 +552,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075993951425",
                 description="콜트레인이 연주한 콜 포터 명곡. 완벽한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/thriller.jpg",
                 sellerId=1,
                 likeCount=39
             ),
@@ -564,7 +565,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075994051425",
                 description="콜트레인의 인상곡 모음. 양호한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/purple_rain.jpg",
                 sellerId=1,
                 likeCount=42
             ),
@@ -577,7 +578,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075994151425",
                 description="콜트레인의 나이마. 거의 새것 같습니다.",
-                albumImage="",
+                albumImage="/images/album/abbey_road.jpg",
                 sellerId=1,
                 likeCount=40
             ),
@@ -590,7 +591,7 @@ def init_default_data():
                 tradeMethod="DELIVERY",
                 barcode="0075994251425",
                 description="Duke Ellington의 감상적 기분. 양호한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/born_to_run.jpg",
                 sellerId=1,
                 likeCount=33
             ),
@@ -603,7 +604,7 @@ def init_default_data():
                 tradeMethod="BOTH",
                 barcode="0075994351425",
                 description="Bill Evans의 가을 낙엽. 완벽한 상태입니다.",
-                albumImage="",
+                albumImage="/images/album/discovery.jpg",
                 sellerId=1,
                 likeCount=36
             )

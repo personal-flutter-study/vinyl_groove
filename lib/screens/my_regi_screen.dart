@@ -1,10 +1,12 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:vinyl_groove_poc_5/models/album_model.dart';
 import 'package:vinyl_groove_poc_5/screens/album_screen.dart';
+import 'package:vinyl_groove_poc_5/screens/regi_screen.dart';
 
 import '../main.dart';
 
@@ -65,7 +67,7 @@ class _MyRegiScreenState extends State<MyRegiScreen> {
           actions: [
             IconButton(
               onPressed: () {
-                context.back();
+                context.go(RegiScreen());
               },
               icon: AppIcon.add.icon(color: Colors.white, size: 28),
             ),
@@ -204,34 +206,63 @@ class _MyRegiScreenState extends State<MyRegiScreen> {
                                           ),
                                           IconButton(
                                             onPressed: () {
-                                              get(
-                                                Uri.parse(
-                                                  'http://${baseUrl}/products/${e.id}',
+                                              showCupertinoDialog(
+                                                context: context,
+                                                builder: (context) => CupertinoAlertDialog(
+                                                  title: Text(
+                                                    '${e.albumName}을(를) 삭제하시겠습니까?',
+                                                  ),
+                                                  actions: [
+                                                    CupertinoButton(
+                                                      child: Text('취소'),
+                                                      onPressed: () {
+                                                        context.back();
+                                                      },
+                                                    ),
+                                                    CupertinoButton(
+                                                      child: Text('삭제'),
+                                                      onPressed: () async {
+                                                        await delete(
+                                                          Uri.parse(
+                                                            'http://${baseUrl}/products/${e.id}',
+                                                          ),
+                                                          headers: baseHeader,
+                                                        ).then((value) async {
+                                                          try {
+                                                            final body =
+                                                                jsonDecode(
+                                                                  value.body,
+                                                                );
+
+                                                            if (value
+                                                                    .statusCode ==
+                                                                200) {
+                                                              message(
+                                                                '상품이 삭제되었습니다',
+                                                              );
+
+                                                              await load();
+
+                                                              setState(() {});
+                                                              return;
+                                                            }
+                                                            message(
+                                                              (body['errors']
+                                                                      as List)
+                                                                  .first['message'],
+                                                            );
+                                                          } catch (e) {
+                                                            print(e);
+                                                          }
+                                                          return null;
+                                                        });
+
+                                                        context.back();
+                                                      },
+                                                    ),
+                                                  ],
                                                 ),
-                                                headers: baseHeader,
-                                              ).then((value) async {
-                                                try {
-                                                  final body = jsonDecode(
-                                                    value.body,
-                                                  );
-
-                                                  if (value.statusCode == 200) {
-                                                    message('상품이 삭제되었습니다');
-
-                                                    await load();
-
-                                                    setState(() {});
-                                                    return;
-                                                  }
-                                                  message(
-                                                    (body['errors'] as List)
-                                                        .first['message'],
-                                                  );
-                                                } catch (e) {
-                                                  print(e);
-                                                }
-                                                return null;
-                                              });
+                                              );
                                             },
                                             icon: AppIcon.delete.icon(
                                               color: Colors.red,

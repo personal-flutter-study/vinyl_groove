@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -17,6 +17,7 @@ class RegiScreen extends StatefulWidget {
 
 class _RegiScreenState extends State<RegiScreen> {
   XFile? image;
+  Uint8List? bytes;
 
   final na = TextEditingController();
   final ar = TextEditingController();
@@ -30,13 +31,6 @@ class _RegiScreenState extends State<RegiScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ImageProvider? provider;
-
-    if (image != null) {
-      final file = File(image!.path);
-      provider = file.existsSync() ? FileImage(file) : AssetImage(file.path);
-    }
-
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
@@ -66,6 +60,7 @@ class _RegiScreenState extends State<RegiScreen> {
                     PopupMenuItem(
                       onTap: () async {
                         image = await ImagePicker().pickImage(source: .camera);
+                        bytes = await image!.readAsBytes();
                         setState(() {});
                       },
                       child: Text(
@@ -76,6 +71,7 @@ class _RegiScreenState extends State<RegiScreen> {
                     PopupMenuItem(
                       onTap: () async {
                         image = await ImagePicker().pickImage(source: .gallery);
+                        bytes = await image!.readAsBytes();
                         setState(() {});
                       },
                       child: Text(
@@ -88,8 +84,8 @@ class _RegiScreenState extends State<RegiScreen> {
                     height: 200,
                     foregroundDecoration: BoxDecoration(
                       borderRadius: .circular(12),
-                      image: provider != null
-                          ? DecorationImage(image: provider)
+                      image: bytes != null
+                          ? DecorationImage(image: MemoryImage(bytes!))
                           : null,
                     ),
                     color: black2,

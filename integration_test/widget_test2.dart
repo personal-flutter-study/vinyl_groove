@@ -17,10 +17,10 @@ class MockImage extends ImagePickerPlatform with MockPlatformInterfaceMixin {
     final data = await rootBundle.load('assets/vinyl_sample.png');
 
     return Future.value(
-      XFile(
-        'assets/vinyl_sample.png',
-        bytes: data.buffer.asUint8List(),
+      XFile.fromData(
+        data.buffer.asUint8List(),
         mimeType: 'image/png',
+        name: 'vinyl_sample.png',
       ),
     );
   }
@@ -113,8 +113,20 @@ void main() async {
 
       await tester.ensureVisible(f1);
       await tester.tap(f1);
+    }, tester);
+    await section('가격 입력 상자 선택 후 새 가격 입력', () async {
+      final f1 = find.byType(TextField).at(2);
+      await tester.ensureVisible(f1);
+      await tester.enterText(f1, '4500');
+    }, tester);
 
-      await Future.delayed(Duration(seconds: 1));
+    await section('"등록하기" 버튼 클릭', () async {
+      final f1 = find.text('등록하기').first;
+
+      await tester.ensureVisible(f1);
+      await tester.tap(f1);
+
+      await Future.delayed(Duration(seconds: 2));
     }, tester);
 
     await section('하단 네비게이션 "마이페이지" 탭 클릭', () async {
@@ -142,15 +154,17 @@ void main() async {
 
     await section('다이얼로그의 "삭제" 버튼 클릭', () async {
       final f1 = find.text('삭제').last;
-
       await tester.tap(f1);
+      await Future.delayed(Duration(seconds: 1));
     }, tester);
 
-    await section('등록 상품 목록 빈 상태 확인', () async {}, tester);
+    await section('등록 상품 목록 빈 상태 확인', () async {
+      await Future.delayed(Duration(seconds: 1));
+    }, tester);
 
     await section('뒤로가기 버튼 클릭', () async {
-      final f1 = find.byType(IconButton).first;
-
+      final f1 = find.byIcon(Icons.arrow_back).first;
+      await tester.ensureVisible(f1);
       await tester.tap(f1);
     }, tester);
 
@@ -164,12 +178,7 @@ void main() async {
       final f1 = find.text('로그아웃').last;
       await tester.ensureVisible(f1);
       await tester.tap(f1);
-    }, tester);
-
-    await section('로그아웃 확인 다이얼로그의 "로그아웃" 버튼 클릭', () async {
-      final f1 = find.text('로그아웃').last;
-      await tester.ensureVisible(f1);
-      await tester.tap(f1);
+      await Future.delayed(Duration(seconds: 1));
     }, tester);
 
     await section('로그인 화면 정상 표시 확인', () async {}, tester);

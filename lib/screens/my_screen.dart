@@ -32,7 +32,7 @@ class _MyScreenState extends State<MyScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: .start,
-            spacing: 16,
+            spacing: 24,
             children: [
               Material(
                 shape: RoundedRectangleBorder(borderRadius: .circular(12)),

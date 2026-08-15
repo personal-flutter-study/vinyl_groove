@@ -18,11 +18,24 @@ class LikeScreen extends StatefulWidget {
 class _LikeScreenState extends State<LikeScreen> {
   List<AlbumModel> deletes = [];
 
+  late AppLifecycleListener _listener;
+
+  @override
+  void initState() {
+    _listener = AppLifecycleListener(
+      onPause: () async {
+        appCtrl.likes.removeWhere((element) => deletes.contains(element));
+        await appCtrl.save();
+      },
+    );
+    super.initState();
+  }
+
   @override
   void dispose() {
     appCtrl.likes.removeWhere((element) => deletes.contains(element));
     appCtrl.save();
-
+    _listener.dispose();
     super.dispose();
   }
 

@@ -33,6 +33,20 @@ class _RegiScreenState extends State<RegiScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          leading: IconButton(
+            onPressed: () {
+              context.back();
+            },
+            icon: Icon(Icons.arrow_back, color: Colors.white),
+          ),
+          title: Text(
+            '상품 등록',
+            style: TextStyle(color: Colors.white, fontWeight: .bold),
+          ),
+        ),
         backgroundColor: black,
         body: SingleChildScrollView(
           child: Padding(
@@ -248,6 +262,14 @@ class _RegiScreenState extends State<RegiScreen> {
                             ),
                           );
                         }).toList(),
+                      ),
+                    ),
+
+                    Text(
+                      con?.l ?? '',
+                      style: TextStyle(
+                        color: Colors.white60,
+                        fontWeight: .w500,
                       ),
                     ),
                   ],

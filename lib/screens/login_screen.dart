@@ -167,27 +167,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: .symmetric(vertical: 14),
                     ),
                     onPressed: () {
-                      setState(() {
-                        if (!RegExp(r'.*@.*\..*').hasMatch(em.text)) {
-                          emE = '올바른 이메일 형식을 입력해주세요';
-                          return;
-                        }
+                      if (!RegExp(r'.*@.*\..*').hasMatch(em.text)) {
+                        emE = '올바른 이메일 형식을 입력해주세요';
+                        setState(() {});
+                        return;
+                      }
 
-                        emE = null;
+                      emE = null;
+                      setState(() {});
 
-                        if (pw.text.length < 6) {
-                          pwE = '비밀번호는 6자 이상이어야 합니다.';
-                          return;
-                        }
-                        if (!RegExp(
-                          r'(?=.*[A-Z])(?=.*[a-z])',
-                        ).hasMatch(pw.text)) {
-                          pwE = '올바른 비밀번호 형식을 입력해주세요';
-                          return;
-                        }
+                      if (pw.text.length < 6) {
+                        pwE = '비밀번호는 6자 이상이어야 합니다.';
+                        setState(() {});
+                        return;
+                      }
+                      if (!RegExp(
+                        r'(?=.*[A-Z])(?=.*[a-z])',
+                      ).hasMatch(pw.text)) {
+                        pwE = '올바른 비밀번호 형식을 입력해주세요';
+                        setState(() {});
+                        return;
+                      }
 
-                        pwE = null;
-                      });
+                      pwE = null;
+                      setState(() {});
 
                       post(
                         Uri.parse('http://${baseUrl}/auth/login'),

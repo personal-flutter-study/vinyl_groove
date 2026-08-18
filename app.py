@@ -72,6 +72,22 @@ def resolve_image_url(request: Request, path: Optional[str]) -> Optional[str]:
         return path
     return f"{str(request.base_url).rstrip('/')}/{path.lstrip('/')}"
 
+# FastAPI가 쿼리 파라미터를 파싱할 때 사용하는 Starlette QueryParams는
+# application/x-www-form-urlencoded 관례를 따라 '+'를 공백으로 자동 치환한다.
+# 그런데 URL 표준(RFC 3986) 상 '+'는 쿼리스트링에서 escaping이 필요 없는 문자라,
+# Postman 등 범용 HTTP 클라이언트는 "VG+" 같은 값을 encoding 없이 그대로 보내는 경우가 많다.
+# 이 경우 서버가 '+'를 공백으로 오인해 다른 값("VG")으로 필터링되는 문제가 생기므로,
+# raw 쿼리스트링에서 '+' 변환 없이(unquote만 적용) 직접 값을 읽어 encoding 여부와 무관하게 동작하게 한다.
+def get_raw_query_param(request: Request, key: str) -> Optional[str]:
+    from urllib.parse import unquote
+    for part in request.url.query.split("&"):
+        if not part:
+            continue
+        k, _, v = part.partition("=")
+        if unquote(k) == key:
+            return unquote(v)
+    return None
+
 # 비밀번호 해싱 (bcrypt는 72바이트까지만 지원하므로 초과분은 잘라서 사용)
 def hash_password(password: str) -> str:
     password_bytes = password.encode("utf-8")[:72]
@@ -221,6 +237,129 @@ def ensure_barcode_scan_products():
         if added:
             db.commit()
             print("✅ 바코드 스캔 테스트용 앨범 등록 완료")
+    finally:
+        db.close()
+
+# 장르(ROCK/JAZZ) + 음반상태(NM/VG+) 조합으로 필터링했을 때 항상 15개 이상 나오도록
+# 보장하기 위한 예비 앨범 후보 목록. 부족한 만큼만 순서대로 채워 넣는다.
+FILTER_COVERAGE_GENRES = ["ROCK", "JAZZ"]
+FILTER_COVERAGE_CONDITIONS = ["NM", "VG+"]
+FILTER_COVERAGE_MIN_COUNT = 15
+FILTER_COVERAGE_POOL = [
+    ("Led Zeppelin IV", "Led Zeppelin", "ROCK", "NM"),
+    ("Exile on Main St.", "The Rolling Stones", "ROCK", "NM"),
+    ("Hotel California", "Eagles", "ROCK", "NM"),
+    ("Are You Experienced", "Jimi Hendrix", "ROCK", "NM"),
+    ("Sticky Fingers", "The Rolling Stones", "ROCK", "NM"),
+    ("Physical Graffiti", "Led Zeppelin", "ROCK", "VG+"),
+    ("Who's Next", "The Who", "ROCK", "VG+"),
+    ("Ziggy Stardust", "David Bowie", "ROCK", "VG+"),
+    ("London Calling", "The Clash", "ROCK", "VG+"),
+    ("Aja", "Steely Dan", "ROCK", "VG+"),
+    ("Time Out", "Dave Brubeck", "JAZZ", "NM"),
+    ("Mingus Ah Um", "Charles Mingus", "JAZZ", "NM"),
+    ("Speak No Evil", "Wayne Shorter", "JAZZ", "NM"),
+    ("The Shape of Jazz to Come", "Ornette Coleman", "JAZZ", "NM"),
+    ("Getz/Gilberto", "Stan Getz & Joao Gilberto", "JAZZ", "NM"),
+    ("Maiden Voyage", "Herbie Hancock", "JAZZ", "VG+"),
+    ("Head Hunters", "Herbie Hancock", "JAZZ", "VG+"),
+    ("Milestones", "Miles Davis", "JAZZ", "VG+"),
+    ("Saxophone Colossus", "Sonny Rollins", "JAZZ", "VG+"),
+    ("The Koln Concert", "Keith Jarrett", "JAZZ", "VG+"),
+]
+FILTER_COVERAGE_IMAGES = ["rumours.jpg", "kind_of_blue.jpg", "thriller.jpg", "purple_rain.jpg", "abbey_road.jpg", "born_to_run.jpg", "discovery.jpg", "sample_vinyl.jpg"]
+
+def ensure_filter_coverage_products():
+    """genres=ROCK,JAZZ & conditions=NM,VG+ 로 필터링했을 때 항상 15개 이상 나오도록 보장"""
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        count = db.query(ProductModel).filter(
+            ProductModel.genre.in_(FILTER_COVERAGE_GENRES),
+            ProductModel.condition.in_(FILTER_COVERAGE_CONDITIONS)
+        ).count()
+        needed = FILTER_COVERAGE_MIN_COUNT - count
+        if needed <= 0:
+            return
+
+        seller = db.query(UserModel).first()
+        seller_id = seller.id if seller else 1
+        existing_barcodes = {b for (b,) in db.query(ProductModel.barcode).all() if b}
+
+        added = 0
+        pool_idx = 0
+        barcode_seq = 0
+        while added < needed and pool_idx < len(FILTER_COVERAGE_POOL):
+            album_name, artist, genre, condition = FILTER_COVERAGE_POOL[pool_idx]
+            pool_idx += 1
+
+            barcode = f"0076003{barcode_seq:03d}0425"
+            while barcode in existing_barcodes:
+                barcode_seq += 1
+                barcode = f"0076003{barcode_seq:03d}0425"
+            barcode_seq += 1
+
+            db.add(ProductModel(
+                albumName=album_name,
+                artist=artist,
+                genre=genre,
+                condition=condition,
+                price=50000 + added * 1500,
+                tradeMethod="BOTH",
+                barcode=barcode,
+                description=f"{album_name}. 필터링 커버리지 보장용 앨범입니다.",
+                albumImage=f"/images/album/{FILTER_COVERAGE_IMAGES[added % len(FILTER_COVERAGE_IMAGES)]}",
+                sellerId=seller_id,
+                likeCount=10 + added
+            ))
+            existing_barcodes.add(barcode)
+            added += 1
+
+        if added:
+            db.commit()
+            print(f"✅ 장르(ROCK/JAZZ)+상태(NM/VG+) 필터 커버리지 앨범 {added}개 추가 완료")
+    finally:
+        db.close()
+
+# 실제 자료(위키백과 등) 기반으로 내용을 채워 넣는 앨범들.
+# barcode를 기준으로 upsert하여, DB가 새로 만들어지든 이미 존재하든
+# 항상 이 정확한 데이터로 반영되도록 보장한다.
+WIKIPEDIA_SOURCED_PRODUCTS = [
+    {
+        "albumName": "Blonde",
+        "artist": "Frank Ocean",
+        "genre": "RNB_SOUL",
+        "condition": "M",
+        "price": 95000,
+        "tradeMethod": "DIRECT",
+        "barcode": "0076000300425",
+        "description": "프랭크 오션의 두 번째 정규 앨범(2016-08-20, Boys Don't Cry 발매). 미니멀한 사운드와 내면적인 가사로 기존 R&B/팝의 관습적 구조에서 벗어났다는 평가를 받으며 평단의 극찬을 받은 작품입니다.",
+        "albumImage": "/images/album/purple_rain.jpg",
+        "likeCount": 72
+    }
+]
+
+def ensure_wikipedia_sourced_products():
+    """WIKIPEDIA_SOURCED_PRODUCTS가 barcode 기준으로 항상 최신 내용으로 존재하도록 보장 (없으면 생성, 있으면 갱신)"""
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        seller = db.query(UserModel).first()
+        seller_id = seller.id if seller else 1
+        changed = False
+        for data in WIKIPEDIA_SOURCED_PRODUCTS:
+            existing = db.query(ProductModel).filter(ProductModel.barcode == data["barcode"]).first()
+            if existing:
+                for key, value in data.items():
+                    if getattr(existing, key) != value:
+                        setattr(existing, key, value)
+                        changed = True
+            else:
+                db.add(ProductModel(sellerId=seller_id, **data))
+                changed = True
+        if changed:
+            db.commit()
+            print("✅ 위키백과 기반 앨범 데이터 반영 완료")
     finally:
         db.close()
 
@@ -694,7 +833,7 @@ def init_default_data():
                 price=95000,
                 tradeMethod="DIRECT",
                 barcode="0076000300425",
-                description="프랭크 오션의 명반. 완벽한 상태입니다.",
+                description="프랭크 오션의 두 번째 정규 앨범(2016-08-20, Boys Don't Cry 발매). 미니멀한 사운드와 내면적인 가사로 기존 R&B/팝의 관습적 구조에서 벗어났다는 평가를 받으며 평단의 극찬을 받은 작품입니다.",
                 albumImage="/images/album/purple_rain.jpg",
                 sellerId=1,
                 likeCount=72
@@ -868,6 +1007,8 @@ async def startup():
     print("✅ 데이터베이스 준비 완료")
     init_default_data()
     ensure_barcode_scan_products()
+    ensure_filter_coverage_products()
+    ensure_wikipedia_sourced_products()
     simulate_price_changes()
     print("📊 알림 시뮬레이션 시작 (30초 주기)")
 
@@ -1030,6 +1171,11 @@ async def list_products(
     current_user: dict = Depends(get_current_user)
 ):
     """상품 목록 조회"""
+    # '+'가 encoding("%2B") 없이 그대로 온 경우(VG+ -> VG로 오인되는 문제)를 대비해
+    # raw 쿼리스트링에서 다시 한 번 읽어, encoding 여부와 무관하게 동작하도록 한다.
+    genres = get_raw_query_param(http_request, "genres") or genres
+    conditions = get_raw_query_param(http_request, "conditions") or conditions
+
     query = db.query(ProductModel)
 
     if keyword:

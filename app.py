@@ -1296,6 +1296,17 @@ async def create_product(
 
     return BaseResponse(success=True, message="상품이 등록되었습니다.", data={"id": new_product.id, "albumName": new_product.albumName, "artist": new_product.artist, "genre": new_product.genre, "condition": new_product.condition, "price": new_product.price, "tradeMethod": new_product.tradeMethod, "barcode": new_product.barcode, "description": new_product.description, "albumImage": resolve_image_url(http_request, new_product.albumImage), "createdAt": new_product.createdAt.isoformat() + "Z"})
 
+@app.delete("/products/me", response_model=BaseResponse, tags=["products"])
+async def delete_my_products(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """내 등록 상품 전체 삭제"""
+    user_id = current_user["user_id"]
+    deleted = db.query(ProductModel).filter(ProductModel.sellerId == user_id).delete()
+    db.commit()
+    return BaseResponse(success=True, message="등록한 상품이 모두 삭제되었습니다.", data={"deletedCount": deleted})
+
 @app.delete("/products/{product_id}", response_model=BaseResponse, tags=["products"])
 async def delete_product(
     product_id: int,

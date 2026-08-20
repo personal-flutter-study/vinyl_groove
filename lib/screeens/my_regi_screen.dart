@@ -67,8 +67,9 @@ class _MyRegiScreenState extends State<MyRegiScreen> {
           actions: [
             IconButton(
               style: IconButton.styleFrom(),
-              onPressed: () {
-                context.go(RegiScreen());
+              onPressed: () async {
+                await context.go(RegiScreen());
+                load();
               },
               icon: Icon(Icons.add, color: Colors.white, size: 32),
             ),
